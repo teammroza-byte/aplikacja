@@ -42,15 +42,13 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 .ctitle::before{content:'';width:3px;height:11px;background:var(--accent);border-radius:2px}
 .cam-box{position:relative;background:#000;border-radius:10px;overflow:hidden;border:2px solid var(--border);width:100%;aspect-ratio:4/3}
 #vid{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none}
-#scanCanvas{position:absolute;inset:0;width:100%;height:100%;display:none}
 .cam-ph{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:var(--muted);z-index:2}
 .cam-ph .big{font-size:2.8rem;opacity:.3}
 .cam-ph p{font-size:.78rem}
 .scan-frame{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:75%;aspect-ratio:2.5/1;border:2px solid var(--accent);border-radius:8px;box-shadow:0 0 0 9999px rgba(0,0,0,.45),0 0 20px rgba(0,212,255,.4);display:none;z-index:3;pointer-events:none}
 .scanline{position:absolute;left:5%;right:5%;height:2px;background:linear-gradient(90deg,transparent,var(--accent),transparent);box-shadow:0 0 10px var(--accent);border-radius:2px;animation:sl 1.8s ease-in-out infinite;display:none;z-index:4;pointer-events:none}
 @keyframes sl{0%,100%{top:18%}50%{top:78%}}
-.cam-running .scan-frame,.cam-running .scanline{display:block}
-.cam-running #vid,.cam-running #scanCanvas{display:block}
+.cam-running .scan-frame,.cam-running .scanline,.cam-running #vid{display:block}
 .cam-running .cam-ph{display:none}
 .camstatus{display:flex;align-items:center;gap:6px;margin-top:8px;font-size:.72rem;color:var(--muted)}
 .sdot{width:7px;height:7px;border-radius:50%;background:var(--muted);flex-shrink:0;transition:all .3s}
@@ -141,13 +139,12 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
       <div class="card">
         <div class="ctitle">Kamera</div>
         <div class="cam-box" id="camBox">
-          <div class="cam-ph" id="camPh">
+          <div class="cam-ph">
             <div class="big">📷</div>
             <p>Kamera nieaktywna</p>
             <p style="font-size:.7rem;opacity:.5">Naciśnij przycisk poniżej</p>
           </div>
           <video id="vid" autoplay playsinline muted></video>
-          <canvas id="scanCanvas"></canvas>
           <div class="scan-frame"></div>
           <div class="scanline"></div>
         </div>
@@ -218,18 +215,14 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 </div>
 
 <script>
-// ── STATE ─────────────────────────────────────
 let orders = JSON.parse(localStorage.getItem('sf_orders') || '[]');
 let curOrder = null, timerInt = null, tStart = null, elapsed = 0, sortBy = 'newest';
-let videoStream = null, scanInterval = null;
+let videoStream = null, detector = null, scanLoop = null;
 
-// ── PERSISTENT TIMER ──────────────────────────
+// ── TIMER ─────────────────────────────────────
 function saveTimerState() {
-  if (curOrder && tStart) {
-    localStorage.setItem('sf_active', JSON.stringify({ order: curOrder, tStart }));
-  } else {
-    localStorage.removeItem('sf_active');
-  }
+  if (curOrder && tStart) localStorage.setItem('sf_active', JSON.stringify({ order: curOrder, tStart }));
+  else localStorage.removeItem('sf_active');
 }
 
 function restoreTimerState() {
@@ -281,53 +274,80 @@ function switchTab(t) {
 async function startCam() {
   const btn = document.getElementById('btnCam');
   btn.disabled = true; btn.textContent = '⏳ Uruchamianie...';
-  setStatus('', 'Inicjalizacja kamery...');
 
   try {
-    // Use exact constraints for iOS Safari
-    videoStream = await navigator.mediaDevices.getUserMedia({
-      video: {
-        facingMode: { exact: 'environment' },
-        width: { ideal: 1280 },
-        height: { ideal: 720 }
-      },
-      audio: false
-    });
-  } catch(e1) {
-    // Fallback — try without exact
+    // Try back camera first
     try {
+      videoStream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { exact: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } },
+        audio: false
+      });
+    } catch {
       videoStream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: 'environment' },
         audio: false
       });
-    } catch(e2) {
-      try {
-        // Last resort — any camera
-        videoStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
-      } catch(e3) {
-        btn.disabled = false; btn.textContent = '📷 Uruchom kamerę';
-        setStatus('err', 'Brak dostępu do kamery');
-        showToast('❌ Włącz dostęp do kamery w Ustawieniach → Safari');
-        return;
-      }
     }
-  }
 
-  const vid = document.getElementById('vid');
-  vid.srcObject = videoStream;
-  vid.onloadedmetadata = () => {
-    vid.play();
+    const vid = document.getElementById('vid');
+    vid.srcObject = videoStream;
+    await vid.play();
+
     document.getElementById('camBox').classList.add('cam-running');
     btn.textContent = '✅ Aktywna'; btn.disabled = true;
     document.getElementById('btnStopCam').disabled = false;
     setStatus('on', 'Kamera aktywna — przyłóż kod');
     showToast('✅ Kamera uruchomiona!');
-    startBarcodeScanning();
-  };
+
+    // Init BarcodeDetector — fast native API on iOS 17+
+    if ('BarcodeDetector' in window) {
+      detector = new BarcodeDetector({
+        formats: ['ean_13','ean_8','code_128','code_39','qr_code','upc_a','upc_e','itf','codabar']
+      });
+      runScanLoop(vid);
+    } else {
+      setStatus('on', 'Przyłóż kod lub wpisz ręcznie ↓');
+      showToast('⚠️ Użyj pola ręcznego wpisywania');
+    }
+
+  } catch(e) {
+    btn.disabled = false; btn.textContent = '📷 Uruchom kamerę';
+    setStatus('err', 'Brak dostępu do kamery');
+    showToast('❌ Włącz dostęp: Ustawienia → Safari → Aparat');
+  }
+}
+
+// Fast scan loop using requestAnimationFrame for max speed
+function runScanLoop(vid) {
+  let running = true;
+  let lastScan = 0;
+
+  async function tick() {
+    if (!running || !videoStream) return;
+
+    const now = Date.now();
+    // Scan every 200ms max — very fast
+    if (now - lastScan >= 200 && vid.readyState >= 2) {
+      lastScan = now;
+      try {
+        const codes = await detector.detect(vid);
+        if (codes.length > 0) {
+          handleScan(codes[0].rawValue);
+        }
+      } catch(e) {}
+    }
+
+    scanLoop = requestAnimationFrame(tick);
+  }
+
+  scanLoop = requestAnimationFrame(tick);
+
+  // Store stop function
+  window._stopScanLoop = () => { running = false; if (scanLoop) cancelAnimationFrame(scanLoop); };
 }
 
 function stopCam() {
-  clearInterval(scanInterval); scanInterval = null;
+  if (window._stopScanLoop) { window._stopScanLoop(); window._stopScanLoop = null; }
   if (videoStream) { videoStream.getTracks().forEach(t => t.stop()); videoStream = null; }
   document.getElementById('vid').srcObject = null;
   document.getElementById('camBox').classList.remove('cam-running');
@@ -335,39 +355,6 @@ function stopCam() {
   document.getElementById('btnCam').textContent = '📷 Uruchom kamerę';
   document.getElementById('btnStopCam').disabled = true;
   setStatus('', 'Kamera zatrzymana');
-}
-
-// ── BARCODE SCANNING ──────────────────────────
-function startBarcodeScanning() {
-  const vid = document.getElementById('vid');
-  const canvas = document.getElementById('scanCanvas');
-  const ctx = canvas.getContext('2d', { willReadFrequently: true });
-
-  // Use BarcodeDetector if available (iOS 17+)
-  if ('BarcodeDetector' in window) {
-    const detector = new BarcodeDetector({
-      formats: ['ean_13','ean_8','code_128','code_39','qr_code','upc_a','upc_e','itf','codabar','data_matrix','aztec','pdf417']
-    });
-    scanInterval = setInterval(async () => {
-      if (!videoStream || vid.readyState < 2) return;
-      try {
-        const codes = await detector.detect(vid);
-        if (codes.length > 0) handleScan(codes[0].rawValue);
-      } catch(e) {}
-    }, 400);
-    return;
-  }
-
-  // Fallback — canvas capture for older iOS
-  scanInterval = setInterval(() => {
-    if (!videoStream || vid.readyState < 2) return;
-    canvas.width = vid.videoWidth;
-    canvas.height = vid.videoHeight;
-    ctx.drawImage(vid, 0, 0);
-    // Without a library we can't decode from canvas on old iOS
-    // Show hint to use manual input
-    setStatus('on', 'Przyłóż kod lub wpisz ręcznie ↓');
-  }, 1000);
 }
 
 // ── SCAN ──────────────────────────────────────
@@ -439,7 +426,7 @@ function updateStats() {
 // ── ORDERS ────────────────────────────────────
 function renderOrders() {
   const q = document.getElementById('search').value.toLowerCase();
-  let list = orders.filter(o => o.code.toLowerCase().includes(q) || (o.desc||'').toLowerCase().includes(q) || fmtDate(o.startTime).includes(q));
+  let list = orders.filter(o => o.code.toLowerCase().includes(q)||(o.desc||'').toLowerCase().includes(q)||fmtDate(o.startTime).includes(q));
   list.sort((a,b) => {
     if (sortBy==='newest') return new Date(b.startTime)-new Date(a.startTime);
     if (sortBy==='oldest') return new Date(a.startTime)-new Date(b.startTime);
@@ -449,8 +436,8 @@ function renderOrders() {
     return 0;
   });
   const el = document.getElementById('olist');
-  if (list.length === 0) {
-    el.innerHTML = `<div class="nodata"><div class="icon">${orders.length===0?'📋':'🔍'}</div><p>${orders.length===0?'Brak zleceń — zacznij skanować!':'Brak wyników'}</p></div>`;
+  if (list.length===0) {
+    el.innerHTML=`<div class="nodata"><div class="icon">${orders.length===0?'📋':'🔍'}</div><p>${orders.length===0?'Brak zleceń — zacznij skanować!':'Brak wyników'}</p></div>`;
     return;
   }
   el.innerHTML = list.map((o,i) => `
@@ -468,29 +455,17 @@ function renderOrders() {
     </div>`).join('');
 }
 
-function delOrder(id) {
-  if (!confirm('Usunąć?')) return;
-  orders = orders.filter(o => o.id !== id);
-  save(); renderOrders(); showToast('🗑 Usunięto');
-}
-function clearAll() {
-  if (!confirm('Usunąć wszystkie?')) return;
-  orders = []; save(); renderOrders(); showToast('🗑 Wyczyszczono');
-}
+function delOrder(id) { if(!confirm('Usunąć?'))return; orders=orders.filter(o=>o.id!==id); save(); renderOrders(); showToast('🗑 Usunięto'); }
+function clearAll() { if(!confirm('Usunąć wszystkie?'))return; orders=[]; save(); renderOrders(); showToast('🗑 Wyczyszczono'); }
 function showSortModal() { document.getElementById('sortModal').classList.add('show'); }
 function hideSortModal(e) { if(e.target===document.getElementById('sortModal')) document.getElementById('sortModal').classList.remove('show'); }
-function setSort(s) {
-  sortBy = s;
-  document.querySelectorAll('.sort-opt').forEach(el => el.classList.toggle('active', el.dataset.sort===s));
-  document.getElementById('sortModal').classList.remove('show');
-  renderOrders();
-}
+function setSort(s) { sortBy=s; document.querySelectorAll('.sort-opt').forEach(el=>el.classList.toggle('active',el.dataset.sort===s)); document.getElementById('sortModal').classList.remove('show'); renderOrders(); }
 
 // ── PDF ───────────────────────────────────────
 function exportPDF() {
-  if (orders.length===0) { showToast('❌ Brak zleceń'); return; }
-  const {jsPDF} = window.jspdf; const doc = new jsPDF();
-  const totalSec = orders.reduce((s,o)=>s+(o.duration||0),0); const now = new Date();
+  if(orders.length===0){showToast('❌ Brak zleceń');return;}
+  const{jsPDF}=window.jspdf; const doc=new jsPDF();
+  const totalSec=orders.reduce((s,o)=>s+(o.duration||0),0); const now=new Date();
   doc.setFillColor(11,13,18); doc.rect(0,0,210,38,'F');
   doc.setTextColor(0,212,255); doc.setFontSize(20); doc.setFont('helvetica','bold'); doc.text('ScanFlow',14,16);
   doc.setFontSize(9); doc.setFont('helvetica','normal'); doc.setTextColor(150,160,180);
@@ -500,33 +475,23 @@ function exportPDF() {
   doc.text('Zleceń: '+orders.length,20,58);
   doc.text('Łącznie: '+fmtDur(totalSec),85,58);
   doc.text('Średnio: '+fmtDur(Math.round(totalSec/orders.length)),152,58);
-  doc.autoTable({
-    startY:72,
-    head:[['#','Kod','Opis','Data','Czas']],
-    body:orders.map((o,i)=>[i+1,o.code,o.desc||'—',fmtDate(o.startTime),fmtDur(o.duration||0)]),
-    theme:'grid',
-    headStyles:{fillColor:[17,19,24],textColor:[0,212,255],fontStyle:'bold',fontSize:8},
-    bodyStyles:{textColor:[200,210,230],fillColor:[11,13,18],fontSize:7.5},
-    alternateRowStyles:{fillColor:[17,19,24]},
-    columnStyles:{0:{cellWidth:10,halign:'center'},1:{cellWidth:42,textColor:[0,212,255]},2:{cellWidth:65},4:{halign:'center',textColor:[57,255,20]}},
-    margin:{left:14,right:14}
-  });
+  doc.autoTable({startY:72,head:[['#','Kod','Opis','Data','Czas']],body:orders.map((o,i)=>[i+1,o.code,o.desc||'—',fmtDate(o.startTime),fmtDur(o.duration||0)]),theme:'grid',headStyles:{fillColor:[17,19,24],textColor:[0,212,255],fontStyle:'bold',fontSize:8},bodyStyles:{textColor:[200,210,230],fillColor:[11,13,18],fontSize:7.5},alternateRowStyles:{fillColor:[17,19,24]},columnStyles:{0:{cellWidth:10,halign:'center'},1:{cellWidth:42,textColor:[0,212,255]},2:{cellWidth:65},4:{halign:'center',textColor:[57,255,20]}},margin:{left:14,right:14}});
   doc.save('scanflow_'+now.toISOString().slice(0,10)+'.pdf');
   showToast('📄 PDF zapisany!');
 }
 
 // ── UTILS ─────────────────────────────────────
-function save() { localStorage.setItem('sf_orders',JSON.stringify(orders)); updateStats(); }
-function fmtSec(s) { return [Math.floor(s/3600),Math.floor((s%3600)/60),s%60].map(v=>String(v).padStart(2,'0')).join(':'); }
-function fmtDur(s) { if(s<60)return s+'s'; if(s<3600)return Math.floor(s/60)+'m '+(s%60)+'s'; return Math.floor(s/3600)+'h '+Math.floor((s%3600)/60)+'m'; }
-function fmtDate(d) { const dt=new Date(d); return dt.toLocaleDateString('pl-PL')+' '+dt.toLocaleTimeString('pl-PL',{hour:'2-digit',minute:'2-digit',second:'2-digit'}); }
-function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-function setStatus(cls,txt) { document.getElementById('sdot').className='sdot'+(cls?' '+cls:''); document.getElementById('stext').textContent=txt; }
-function showToast(msg) { const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('show'),3000); }
-function flash() { const f=document.getElementById('flash'); f.classList.add('go'); setTimeout(()=>f.classList.remove('go'),150); }
-function beep() { try{const ctx=new(window.AudioContext||window.webkitAudioContext)();const o=ctx.createOscillator();const g=ctx.createGain();o.connect(g);g.connect(ctx.destination);o.frequency.value=1200;o.type='sine';g.gain.setValueAtTime(0.3,ctx.currentTime);g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.15);o.start(ctx.currentTime);o.stop(ctx.currentTime+0.15);}catch(e){} }
+function save(){localStorage.setItem('sf_orders',JSON.stringify(orders));updateStats();}
+function fmtSec(s){return[Math.floor(s/3600),Math.floor((s%3600)/60),s%60].map(v=>String(v).padStart(2,'0')).join(':');}
+function fmtDur(s){if(s<60)return s+'s';if(s<3600)return Math.floor(s/60)+'m '+(s%60)+'s';return Math.floor(s/3600)+'h '+Math.floor((s%3600)/60)+'m';}
+function fmtDate(d){const dt=new Date(d);return dt.toLocaleDateString('pl-PL')+' '+dt.toLocaleTimeString('pl-PL',{hour:'2-digit',minute:'2-digit',second:'2-digit'});}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function setStatus(cls,txt){document.getElementById('sdot').className='sdot'+(cls?' '+cls:'');document.getElementById('stext').textContent=txt;}
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),3000);}
+function flash(){const f=document.getElementById('flash');f.classList.add('go');setTimeout(()=>f.classList.remove('go'),150);}
+function beep(){try{const ctx=new(window.AudioContext||window.webkitAudioContext)();const o=ctx.createOscillator();const g=ctx.createGain();o.connect(g);g.connect(ctx.destination);o.frequency.value=1200;o.type='sine';g.gain.setValueAtTime(0.3,ctx.currentTime);g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.15);o.start(ctx.currentTime);o.stop(ctx.currentTime+0.15);}catch(e){}}
 
-document.getElementById('manInput').addEventListener('keydown', e => { if(e.key==='Enter') manualScan(); });
+document.getElementById('manInput').addEventListener('keydown',e=>{if(e.key==='Enter')manualScan();});
 updateStats(); renderOrders(); restoreTimerState();
 </script>
 </body>
