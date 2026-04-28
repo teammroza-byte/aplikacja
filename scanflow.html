@@ -10,6 +10,7 @@
 <title>ScanFlow</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Sora:wght@300;400;600;800&display=swap');
 :root {
@@ -40,21 +41,26 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 .card{background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:14px}
 .ctitle{font-size:.6rem;text-transform:uppercase;letter-spacing:2px;color:var(--muted);margin-bottom:12px;display:flex;align-items:center;gap:6px}
 .ctitle::before{content:'';width:3px;height:11px;background:var(--accent);border-radius:2px}
+
+/* CAMERA */
 .cam-box{position:relative;background:#000;border-radius:10px;overflow:hidden;border:2px solid var(--border);width:100%;aspect-ratio:4/3}
-#vid{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none}
+#quagga-container{position:absolute;inset:0;width:100%;height:100%}
+#quagga-container video{width:100%!important;height:100%!important;object-fit:cover}
+#quagga-container canvas{position:absolute;top:0;left:0;width:100%!important;height:100%!important}
 .cam-ph{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:var(--muted);z-index:2}
 .cam-ph .big{font-size:2.8rem;opacity:.3}
 .cam-ph p{font-size:.78rem}
-.scan-frame{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:75%;aspect-ratio:2.5/1;border:2px solid var(--accent);border-radius:8px;box-shadow:0 0 0 9999px rgba(0,0,0,.45),0 0 20px rgba(0,212,255,.4);display:none;z-index:3;pointer-events:none}
-.scanline{position:absolute;left:5%;right:5%;height:2px;background:linear-gradient(90deg,transparent,var(--accent),transparent);box-shadow:0 0 10px var(--accent);border-radius:2px;animation:sl 1.8s ease-in-out infinite;display:none;z-index:4;pointer-events:none}
+.scan-frame{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:80%;aspect-ratio:3/1;border:2px solid var(--accent);border-radius:8px;box-shadow:0 0 0 9999px rgba(0,0,0,.45),0 0 20px rgba(0,212,255,.4);display:none;z-index:10;pointer-events:none}
+.scanline{position:absolute;left:5%;right:5%;height:2px;background:linear-gradient(90deg,transparent,var(--accent),transparent);box-shadow:0 0 10px var(--accent);border-radius:2px;animation:sl 1.8s ease-in-out infinite;display:none;z-index:11;pointer-events:none}
 @keyframes sl{0%,100%{top:18%}50%{top:78%}}
-.cam-running .scan-frame,.cam-running .scanline,.cam-running #vid{display:block}
+.cam-running .scan-frame,.cam-running .scanline{display:block}
 .cam-running .cam-ph{display:none}
 .camstatus{display:flex;align-items:center;gap:6px;margin-top:8px;font-size:.72rem;color:var(--muted)}
 .sdot{width:7px;height:7px;border-radius:50%;background:var(--muted);flex-shrink:0;transition:all .3s}
 .sdot.on{background:var(--success);box-shadow:0 0 8px var(--success);animation:bp 1s infinite}
 .sdot.err{background:var(--danger)}
 @keyframes bp{50%{opacity:.3}}
+
 .btn{display:flex;align-items:center;justify-content:center;gap:6px;padding:12px 16px;border-radius:10px;border:none;font-family:'Sora',sans-serif;font-weight:600;font-size:.88rem;cursor:pointer;transition:all .18s;width:100%;-webkit-user-select:none;user-select:none}
 .btn:active{transform:scale(.97);opacity:.85}
 .btn-primary{background:linear-gradient(135deg,#00aacc,#0055ff);color:#fff}
@@ -139,12 +145,12 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
       <div class="card">
         <div class="ctitle">Kamera</div>
         <div class="cam-box" id="camBox">
-          <div class="cam-ph">
+          <div class="cam-ph" id="camPh">
             <div class="big">📷</div>
             <p>Kamera nieaktywna</p>
             <p style="font-size:.7rem;opacity:.5">Naciśnij przycisk poniżej</p>
           </div>
-          <video id="vid" autoplay playsinline muted></video>
+          <div id="quagga-container"></div>
           <div class="scan-frame"></div>
           <div class="scanline"></div>
         </div>
@@ -217,7 +223,7 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 <script>
 let orders = JSON.parse(localStorage.getItem('sf_orders') || '[]');
 let curOrder = null, timerInt = null, tStart = null, elapsed = 0, sortBy = 'newest';
-let videoStream = null, detector = null, scanLoop = null;
+let camRunning = false;
 
 // ── TIMER ─────────────────────────────────────
 function saveTimerState() {
@@ -270,86 +276,90 @@ function switchTab(t) {
   if (t==='orders') renderOrders();
 }
 
-// ── CAMERA ────────────────────────────────────
-async function startCam() {
+// ── CAMERA / QUAGGA ───────────────────────────
+function startCam() {
   const btn = document.getElementById('btnCam');
   btn.disabled = true; btn.textContent = '⏳ Uruchamianie...';
+  setStatus('', 'Inicjalizacja kamery...');
 
-  try {
-    // Try back camera first
-    try {
-      videoStream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: { exact: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } },
-        audio: false
-      });
-    } catch {
-      videoStream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment' },
-        audio: false
-      });
+  const container = document.getElementById('quagga-container');
+  container.innerHTML = '';
+
+  Quagga.init({
+    inputStream: {
+      name: 'Live',
+      type: 'LiveStream',
+      target: container,
+      constraints: {
+        facingMode: 'environment',
+        width: { min: 640, ideal: 1280, max: 1920 },
+        height: { min: 480, ideal: 720, max: 1080 }
+      },
+      area: {
+        top: '20%', right: '5%', left: '5%', bottom: '20%'
+      }
+    },
+    locator: {
+      patchSize: 'medium',
+      halfSample: true
+    },
+    numOfWorkers: 0,
+    frequency: 15,
+    decoder: {
+      readers: [
+        'code_128_reader',
+        'ean_reader',
+        'ean_8_reader',
+        'code_39_reader',
+        'code_39_vin_reader',
+        'codabar_reader',
+        'upc_reader',
+        'upc_e_reader',
+        'i2of5_reader',
+        '2of5_reader'
+      ],
+      debug: {
+        showCanvas: false,
+        showPatches: false,
+        showFoundPatches: false,
+        showSkeleton: false,
+        showLabels: false,
+        showPatchLabels: false,
+        showRemainingPatchLabels: false,
+        boxFromPatches: { showTransformed: false, showTransformedBox: false, showBB: false }
+      }
+    },
+    locate: true
+  }, function(err) {
+    if (err) {
+      console.error('Quagga init error:', err);
+      btn.disabled = false; btn.textContent = '📷 Uruchom kamerę';
+      setStatus('err', 'Błąd kamery');
+      showToast('❌ Włącz dostęp: Ustawienia → Safari → Aparat');
+      return;
     }
 
-    const vid = document.getElementById('vid');
-    vid.srcObject = videoStream;
-    await vid.play();
-
+    Quagga.start();
+    camRunning = true;
     document.getElementById('camBox').classList.add('cam-running');
     btn.textContent = '✅ Aktywna'; btn.disabled = true;
     document.getElementById('btnStopCam').disabled = false;
     setStatus('on', 'Kamera aktywna — przyłóż kod');
     showToast('✅ Kamera uruchomiona!');
+  });
 
-    // Init BarcodeDetector — fast native API on iOS 17+
-    if ('BarcodeDetector' in window) {
-      detector = new BarcodeDetector({
-        formats: ['ean_13','ean_8','code_128','code_39','qr_code','upc_a','upc_e','itf','codabar']
-      });
-      runScanLoop(vid);
-    } else {
-      setStatus('on', 'Przyłóż kod lub wpisz ręcznie ↓');
-      showToast('⚠️ Użyj pola ręcznego wpisywania');
-    }
-
-  } catch(e) {
-    btn.disabled = false; btn.textContent = '📷 Uruchom kamerę';
-    setStatus('err', 'Brak dostępu do kamery');
-    showToast('❌ Włącz dostęp: Ustawienia → Safari → Aparat');
-  }
-}
-
-// Fast scan loop using requestAnimationFrame for max speed
-function runScanLoop(vid) {
-  let running = true;
-  let lastScan = 0;
-
-  async function tick() {
-    if (!running || !videoStream) return;
-
-    const now = Date.now();
-    // Scan every 200ms max — very fast
-    if (now - lastScan >= 200 && vid.readyState >= 2) {
-      lastScan = now;
-      try {
-        const codes = await detector.detect(vid);
-        if (codes.length > 0) {
-          handleScan(codes[0].rawValue);
-        }
-      } catch(e) {}
-    }
-
-    scanLoop = requestAnimationFrame(tick);
-  }
-
-  scanLoop = requestAnimationFrame(tick);
-
-  // Store stop function
-  window._stopScanLoop = () => { running = false; if (scanLoop) cancelAnimationFrame(scanLoop); };
+  Quagga.onDetected(function(result) {
+    const code = result.codeResult.code;
+    if (code) handleScan(code);
+  });
 }
 
 function stopCam() {
-  if (window._stopScanLoop) { window._stopScanLoop(); window._stopScanLoop = null; }
-  if (videoStream) { videoStream.getTracks().forEach(t => t.stop()); videoStream = null; }
-  document.getElementById('vid').srcObject = null;
+  if (camRunning) {
+    Quagga.stop();
+    camRunning = false;
+  }
+  document.getElementById('quagga-container').innerHTML = '';
   document.getElementById('camBox').classList.remove('cam-running');
   document.getElementById('btnCam').disabled = false;
   document.getElementById('btnCam').textContent = '📷 Uruchom kamerę';
@@ -455,23 +465,23 @@ function renderOrders() {
     </div>`).join('');
 }
 
-function delOrder(id) { if(!confirm('Usunąć?'))return; orders=orders.filter(o=>o.id!==id); save(); renderOrders(); showToast('🗑 Usunięto'); }
-function clearAll() { if(!confirm('Usunąć wszystkie?'))return; orders=[]; save(); renderOrders(); showToast('🗑 Wyczyszczono'); }
-function showSortModal() { document.getElementById('sortModal').classList.add('show'); }
-function hideSortModal(e) { if(e.target===document.getElementById('sortModal')) document.getElementById('sortModal').classList.remove('show'); }
-function setSort(s) { sortBy=s; document.querySelectorAll('.sort-opt').forEach(el=>el.classList.toggle('active',el.dataset.sort===s)); document.getElementById('sortModal').classList.remove('show'); renderOrders(); }
+function delOrder(id){if(!confirm('Usunąć?'))return;orders=orders.filter(o=>o.id!==id);save();renderOrders();showToast('🗑 Usunięto');}
+function clearAll(){if(!confirm('Usunąć wszystkie?'))return;orders=[];save();renderOrders();showToast('🗑 Wyczyszczono');}
+function showSortModal(){document.getElementById('sortModal').classList.add('show');}
+function hideSortModal(e){if(e.target===document.getElementById('sortModal'))document.getElementById('sortModal').classList.remove('show');}
+function setSort(s){sortBy=s;document.querySelectorAll('.sort-opt').forEach(el=>el.classList.toggle('active',el.dataset.sort===s));document.getElementById('sortModal').classList.remove('show');renderOrders();}
 
 // ── PDF ───────────────────────────────────────
-function exportPDF() {
+function exportPDF(){
   if(orders.length===0){showToast('❌ Brak zleceń');return;}
-  const{jsPDF}=window.jspdf; const doc=new jsPDF();
-  const totalSec=orders.reduce((s,o)=>s+(o.duration||0),0); const now=new Date();
-  doc.setFillColor(11,13,18); doc.rect(0,0,210,38,'F');
-  doc.setTextColor(0,212,255); doc.setFontSize(20); doc.setFont('helvetica','bold'); doc.text('ScanFlow',14,16);
-  doc.setFontSize(9); doc.setFont('helvetica','normal'); doc.setTextColor(150,160,180);
-  doc.text('Raport zleceń',14,24); doc.text('Wygenerowano: '+fmtDate(now),14,31);
-  doc.setFillColor(22,26,36); doc.roundedRect(14,44,182,22,3,3,'F');
-  doc.setTextColor(57,255,20); doc.setFontSize(13); doc.setFont('helvetica','bold');
+  const{jsPDF}=window.jspdf;const doc=new jsPDF();
+  const totalSec=orders.reduce((s,o)=>s+(o.duration||0),0);const now=new Date();
+  doc.setFillColor(11,13,18);doc.rect(0,0,210,38,'F');
+  doc.setTextColor(0,212,255);doc.setFontSize(20);doc.setFont('helvetica','bold');doc.text('ScanFlow',14,16);
+  doc.setFontSize(9);doc.setFont('helvetica','normal');doc.setTextColor(150,160,180);
+  doc.text('Raport zleceń',14,24);doc.text('Wygenerowano: '+fmtDate(now),14,31);
+  doc.setFillColor(22,26,36);doc.roundedRect(14,44,182,22,3,3,'F');
+  doc.setTextColor(57,255,20);doc.setFontSize(13);doc.setFont('helvetica','bold');
   doc.text('Zleceń: '+orders.length,20,58);
   doc.text('Łącznie: '+fmtDur(totalSec),85,58);
   doc.text('Średnio: '+fmtDur(Math.round(totalSec/orders.length)),152,58);
@@ -492,7 +502,7 @@ function flash(){const f=document.getElementById('flash');f.classList.add('go');
 function beep(){try{const ctx=new(window.AudioContext||window.webkitAudioContext)();const o=ctx.createOscillator();const g=ctx.createGain();o.connect(g);g.connect(ctx.destination);o.frequency.value=1200;o.type='sine';g.gain.setValueAtTime(0.3,ctx.currentTime);g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.15);o.start(ctx.currentTime);o.stop(ctx.currentTime+0.15);}catch(e){}}
 
 document.getElementById('manInput').addEventListener('keydown',e=>{if(e.key==='Enter')manualScan();});
-updateStats(); renderOrders(); restoreTimerState();
+updateStats();renderOrders();restoreTimerState();
 </script>
 </body>
 </html>
