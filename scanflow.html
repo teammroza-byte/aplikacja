@@ -22,8 +22,6 @@
 html,body{height:100%;overflow:hidden;font-family:'Sora',sans-serif;background:var(--bg);color:var(--text);overscroll-behavior:none}
 body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,212,255,.02) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,.02) 1px,transparent 1px);background-size:32px 32px;pointer-events:none;z-index:0}
 #app{position:fixed;inset:0;display:flex;flex-direction:column;padding-top:var(--safe-top);padding-bottom:var(--safe-bot);z-index:1}
-
-/* HEADER */
 .hdr{display:flex;align-items:center;justify-content:space-between;padding:12px 16px 10px;border-bottom:1px solid var(--border);flex-shrink:0}
 .logo{display:flex;align-items:center;gap:10px}
 .logo-ic{width:36px;height:36px;border-radius:9px;background:linear-gradient(135deg,var(--accent),#0055ff);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
@@ -33,38 +31,25 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 .hs{text-align:right}
 .hs-val{font-family:'JetBrains Mono',monospace;font-size:1.1rem;font-weight:700;color:var(--accent)}
 .hs-lbl{font-size:.55rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px}
-
-/* TABS */
 .tabs{display:flex;gap:3px;margin:10px 12px 0;background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:3px;flex-shrink:0}
 .tab{flex:1;padding:9px 6px;border:none;background:transparent;color:var(--muted);font-family:'Sora',sans-serif;font-size:.82rem;font-weight:600;border-radius:9px;cursor:pointer;transition:all .2s}
 .tab.on{background:var(--s2);color:var(--accent);border:1px solid var(--border)}
-
-/* PANELS */
 .panel{display:none;flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
 .panel.on{display:flex;flex-direction:column}
 .panel-inner{padding:10px 12px 20px;display:flex;flex-direction:column;gap:10px}
-
-/* CARD */
 .card{background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:14px}
 .ctitle{font-size:.6rem;text-transform:uppercase;letter-spacing:2px;color:var(--muted);margin-bottom:12px;display:flex;align-items:center;gap:6px}
 .ctitle::before{content:'';width:3px;height:11px;background:var(--accent);border-radius:2px}
-
-/* TYPE SELECTOR */
-.type-selector{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:4px}
-.type-btn{flex:1;min-width:calc(50% - 3px);padding:10px 8px;border-radius:10px;border:2px solid var(--border);background:var(--s2);color:var(--muted);font-family:'Sora',sans-serif;font-size:.8rem;font-weight:600;cursor:pointer;transition:all .2s;text-align:center}
-.type-btn.on-gwarancja{border-color:#ff9500;background:rgba(255,149,0,.15);color:#ff9500}
-.type-btn.on-platne{border-color:var(--success);background:rgba(0,230,118,.15);color:var(--success)}
-.type-btn.on-kontynuacja{border-color:#bf5af2;background:rgba(191,90,242,.15);color:#bf5af2}
-.type-btn.on-moje{border-color:var(--accent);background:rgba(0,212,255,.15);color:var(--accent)}
-
-/* TYPE BADGE */
+.type-selector{display:flex;gap:6px}
+.type-btn{flex:1;padding:12px 6px;border-radius:10px;border:2px solid var(--border);background:var(--s2);color:var(--muted);font-family:'Sora',sans-serif;font-size:.82rem;font-weight:700;cursor:pointer;transition:all .2s;text-align:center}
+.type-btn.on-gwarancja{border-color:#ff9500;background:rgba(255,149,0,.18);color:#ff9500}
+.type-btn.on-platne{border-color:var(--success);background:rgba(0,230,118,.18);color:var(--success)}
+.type-btn.on-kontynuacja{border-color:#bf5af2;background:rgba(191,90,242,.18);color:#bf5af2}
 .type-badge{display:inline-block;padding:3px 10px;border-radius:6px;font-size:.72rem;font-weight:700;letter-spacing:.5px}
 .badge-gwarancja{background:rgba(255,149,0,.15);color:#ff9500;border:1px solid rgba(255,149,0,.3)}
 .badge-platne{background:rgba(0,230,118,.15);color:var(--success);border:1px solid rgba(0,230,118,.3)}
 .badge-kontynuacja{background:rgba(191,90,242,.15);color:#bf5af2;border:1px solid rgba(191,90,242,.3)}
-.badge-moje{background:rgba(0,212,255,.15);color:var(--accent);border:1px solid rgba(0,212,255,.3)}
-
-/* INPUTS */
+.ilbl{font-size:.58rem;text-transform:uppercase;letter-spacing:2px;color:var(--muted);margin-bottom:6px;display:block}
 .irow{display:flex;gap:8px;margin-bottom:8px}
 .minput{flex:1;background:var(--s2);border:1px solid var(--border);border-radius:9px;padding:11px 13px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:.88rem;outline:none;-webkit-appearance:none;transition:border-color .2s}
 .minput:focus{border-color:var(--accent)}
@@ -72,9 +57,6 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 .desc-input{width:100%;background:var(--s2);border:1px solid var(--border);border-radius:9px;padding:11px 13px;color:var(--text);font-family:'Sora',sans-serif;font-size:.88rem;outline:none;-webkit-appearance:none;resize:none;min-height:60px;transition:border-color .2s}
 .desc-input:focus{border-color:var(--accent)}
 .desc-input::placeholder{color:var(--muted)}
-.ilbl{font-size:.58rem;text-transform:uppercase;letter-spacing:2px;color:var(--muted);margin-bottom:6px;display:block}
-
-/* INFO BOXES */
 .ibox{background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:13px;margin-bottom:8px}
 .code-val{font-family:'JetBrains Mono',monospace;font-size:1rem;color:var(--accent);font-weight:700;word-break:break-all}
 .code-empty{color:var(--muted);font-style:italic;font-size:.82rem;font-weight:400}
@@ -83,8 +65,6 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 @keyframes tp{50%{opacity:.6}}
 .timer-bg-note{font-size:.7rem;color:var(--muted);margin-top:6px;display:none;align-items:center;gap:5px}
 .timer-bg-dot{width:6px;height:6px;border-radius:50%;background:var(--green);flex-shrink:0}
-
-/* BUTTONS */
 .btn{display:flex;align-items:center;justify-content:center;gap:6px;padding:12px 16px;border-radius:10px;border:none;font-family:'Sora',sans-serif;font-weight:600;font-size:.88rem;cursor:pointer;transition:all .18s;width:100%;-webkit-user-select:none;user-select:none}
 .btn:active{transform:scale(.97);opacity:.85}
 .btn-primary{background:linear-gradient(135deg,#00aacc,#0055ff);color:#fff}
@@ -92,31 +72,23 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 .btn-stop{background:linear-gradient(135deg,#ff5500,#cc1100);color:#fff;font-size:1rem;padding:16px}
 .btn-success{background:linear-gradient(135deg,#00b050,#007030);color:#fff}
 .btn-danger{background:linear-gradient(135deg,#cc0020,#880010);color:#fff}
-.btn-repeat{background:linear-gradient(135deg,#bf5af2,#7030a0);color:#fff}
 .btn:disabled{opacity:.35;pointer-events:none}
 .btn-row{display:flex;gap:8px;margin-top:10px}
 .btn-row .btn{flex:1}
-
-/* SESSION */
 .mgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .mbox{background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center}
 .mval{font-family:'JetBrains Mono',monospace;font-size:1.25rem;font-weight:700;color:var(--accent)}
 .mlbl{font-size:.58rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:3px}
-
-/* ORDERS */
 .ocontrols{padding:10px 12px 4px;display:flex;flex-direction:column;gap:8px;flex-shrink:0}
 .sbox{background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:11px 14px;color:var(--text);font-family:'Sora',sans-serif;font-size:.88rem;outline:none;width:100%;-webkit-appearance:none}
 .sbox:focus{border-color:var(--accent)}
 .sbox::placeholder{color:var(--muted)}
 .obar{display:flex;gap:8px}
 .obar .btn{flex:1;padding:10px 8px;font-size:.8rem}
-
-/* FILTER TABS */
 .ftabs{display:flex;gap:4px;overflow-x:auto;padding-bottom:2px}
 .ftabs::-webkit-scrollbar{display:none}
 .ftab{flex-shrink:0;padding:6px 12px;border-radius:8px;border:1px solid var(--border);background:var(--s2);color:var(--muted);font-size:.75rem;font-weight:600;cursor:pointer;transition:all .2s;white-space:nowrap}
 .ftab.on{background:var(--s1);color:var(--accent);border-color:var(--accent)}
-
 .olist{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:6px 12px 20px}
 .orow{background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:8px}
 .orow-top{display:flex;align-items:center;gap:8px}
@@ -126,23 +98,18 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 .odate{font-size:.7rem;color:var(--muted);margin-top:2px}
 .odur{background:rgba(57,255,20,.1);border:1px solid rgba(57,255,20,.2);border-radius:7px;padding:3px 8px;font-family:'JetBrains Mono',monospace;font-size:.72rem;color:var(--green);flex-shrink:0}
 .orow-btns{display:flex;gap:6px;margin-top:8px}
-.orow-btn{flex:1;padding:8px;border-radius:8px;border:none;font-family:'Sora',sans-serif;font-size:.75rem;font-weight:600;cursor:pointer;transition:all .2s}
+.orow-btn{flex:1;padding:9px;border-radius:8px;border:none;font-family:'Sora',sans-serif;font-size:.78rem;font-weight:600;cursor:pointer;transition:all .2s}
 .orow-btn:active{transform:scale(.96)}
 .btn-rep{background:rgba(191,90,242,.15);color:#bf5af2;border:1px solid rgba(191,90,242,.3)}
 .btn-del{background:rgba(255,58,92,.1);color:var(--danger);border:1px solid rgba(255,58,92,.2)}
-.odesc{font-size:.78rem;color:var(--muted);margin-top:6px;font-style:italic}
-.ozlec{font-size:.78rem;color:var(--text);margin-top:4px;font-weight:600}
-
+.odesc{font-size:.78rem;color:var(--muted);margin-top:5px;font-style:italic}
 .nodata{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--muted);padding:40px}
 .nodata .icon{font-size:2.5rem;opacity:.25}
-
-/* TOAST */
+.version{text-align:center;padding:10px;font-size:.65rem;color:var(--muted);letter-spacing:1px;flex-shrink:0}
 .toast{position:fixed;bottom:calc(20px + var(--safe-bot));left:50%;transform:translateX(-50%) translateY(80px);background:var(--s2);border:1px solid var(--accent);color:var(--accent);padding:10px 20px;border-radius:12px;font-size:.85rem;font-weight:600;z-index:9999;transition:transform .28s cubic-bezier(.34,1.56,.64,1);box-shadow:0 8px 24px rgba(0,212,255,.18);white-space:nowrap;pointer-events:none}
 .toast.show{transform:translateX(-50%) translateY(0)}
 .flash{position:fixed;inset:0;background:rgba(0,212,255,.15);pointer-events:none;opacity:0;z-index:9998;transition:opacity .08s}
 .flash.go{opacity:1}
-
-/* MODAL */
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:500;display:none;align-items:flex-end}
 .modal-bg.show{display:flex}
 .modal-sheet{width:100%;background:var(--s1);border-top:1px solid var(--border);border-radius:20px 20px 0 0;padding:20px 16px calc(20px + var(--safe-bot))}
@@ -155,105 +122,81 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 <body>
 <div class="flash" id="flash"></div>
 <div class="toast" id="toast"></div>
-
 <div id="app">
   <div class="hdr">
     <div class="logo">
       <div class="logo-ic">📦</div>
-      <div><div class="logo-title">ScanFlow</div><div class="logo-sub">System zleceń</div></div>
+      <div><div class="logo-title">ScanFlow</div><div class="logo-sub">System zlecen</div></div>
     </div>
     <div class="hstats">
-      <div class="hs"><div class="hs-val" id="hTotal">0</div><div class="hs-lbl">Zleceń</div></div>
-      <div class="hs"><div class="hs-val" id="hTime">0s</div><div class="hs-lbl">Łącznie</div></div>
+      <div class="hs"><div class="hs-val" id="hTotal">0</div><div class="hs-lbl">Zlecen</div></div>
+      <div class="hs"><div class="hs-val" id="hTime">0s</div><div class="hs-lbl">Lacznie</div></div>
     </div>
   </div>
-
   <div class="tabs">
     <button class="tab on" onclick="switchTab('scanner')">📝 Nowe zlecenie</button>
     <button class="tab" onclick="switchTab('orders')">📋 Zlecenia</button>
   </div>
 
-  <!-- NOWE ZLECENIE -->
   <div class="panel on" id="panel-scanner">
     <div class="panel-inner">
-
-      <!-- Typ zlecenia -->
       <div class="card">
         <div class="ctitle">Typ zlecenia</div>
         <div class="type-selector">
           <button class="type-btn" id="type-gwarancja" onclick="selectType('gwarancja')">🔴 Gwarancja</button>
-          <button class="type-btn" id="type-platne" onclick="selectType('platne')">💚 Płatne</button>
+          <button class="type-btn" id="type-platne" onclick="selectType('platne')">💚 Platne</button>
           <button class="type-btn" id="type-kontynuacja" onclick="selectType('kontynuacja')">🟣 Kontynuacja</button>
-          <button class="type-btn" id="type-moje" onclick="selectType('moje')">🔵 Moje</button>
         </div>
       </div>
-
-      <!-- Numer zlecenia -->
       <div class="card">
         <div class="ctitle">Dane zlecenia</div>
         <span class="ilbl">Numer zlecenia</span>
-        <div class="irow">
-          <input class="minput" id="zlecInput" placeholder="np. 26222" autocomplete="off" inputmode="numeric">
-        </div>
-        <span class="ilbl" style="margin-top:4px;">Kod z samochodu (opcjonalny)</span>
-        <div class="irow">
-          <input class="minput" id="codeInput" placeholder="np. 56750209" autocomplete="off">
-        </div>
-        <span class="ilbl" style="margin-top:4px;">Dodatkowe uwagi</span>
+        <div class="irow"><input class="minput" id="zlecInput" placeholder="np. 26222" autocomplete="off" inputmode="numeric"></div>
+        <span class="ilbl">Kod z samochodu (opcjonalny)</span>
+        <div class="irow"><input class="minput" id="codeInput" placeholder="np. 56750209" autocomplete="off"></div>
+        <span class="ilbl">Uwagi</span>
         <textarea class="desc-input" id="descInput" placeholder="Np. wymiana oleju, klient czeka..."></textarea>
-        <button class="btn btn-primary" style="margin-top:12px;" onclick="startOrder()">▶ Uruchom timer</button>
+        <button class="btn btn-primary" style="margin-top:12px;" onclick="startOrder(null)">▶ Uruchom timer</button>
       </div>
-
-      <!-- Aktywne zlecenie -->
       <div class="card">
         <div class="ctitle">Aktywne zlecenie</div>
-
         <div class="ibox">
           <div class="ilbl">Nr zlecenia</div>
           <div class="code-val code-empty" id="curZlec">— brak —</div>
         </div>
-
         <div class="ibox">
           <div class="ilbl">Typ</div>
           <div id="curType">—</div>
         </div>
-
         <div class="ibox">
           <div class="ilbl">Czas trwania</div>
           <div class="timer-val" id="timerDisp">00:00:00</div>
           <div class="timer-bg-note" id="timerBgNote">
             <div class="timer-bg-dot"></div>
-            Timer działa w tle
+            Timer dziala w tle
           </div>
         </div>
-
-        <button class="btn btn-stop" id="btnEndOrder" onclick="endOrder()" disabled style="margin-top:10px;">
-          ⏹ STOP — Zakończ zlecenie
-        </button>
+        <button class="btn btn-stop" id="btnEndOrder" onclick="endOrder()" disabled style="margin-top:10px;">⏹ STOP — Zakoncz zlecenie</button>
       </div>
-
-      <!-- Sesja -->
       <div class="card">
         <div class="ctitle">Sesja</div>
         <div class="mgrid">
-          <div class="mbox"><div class="mval" id="sesOrders">0</div><div class="mlbl">Zleceń</div></div>
-          <div class="mbox"><div class="mval" id="sesTime" style="font-size:1rem;">0s</div><div class="mlbl">Łącznie</div></div>
+          <div class="mbox"><div class="mval" id="sesOrders">0</div><div class="mlbl">Zlecen</div></div>
+          <div class="mbox"><div class="mval" id="sesTime" style="font-size:1rem;">0s</div><div class="mlbl">Lacznie</div></div>
         </div>
       </div>
-
     </div>
+    <div class="version">ScanFlow v3.1 — Poprawka 4</div>
   </div>
 
-  <!-- ZLECENIA -->
   <div class="panel" id="panel-orders">
     <div class="ocontrols">
       <input class="sbox" id="search" placeholder="🔍 Szukaj numeru, kodu, uwag..." oninput="renderOrders()">
-      <div class="ftabs" id="filterTabs">
+      <div class="ftabs">
         <button class="ftab on" data-filter="all" onclick="setFilter('all')">Wszystkie</button>
         <button class="ftab" data-filter="gwarancja" onclick="setFilter('gwarancja')">🔴 Gwarancja</button>
-        <button class="ftab" data-filter="platne" onclick="setFilter('platne')">💚 Płatne</button>
+        <button class="ftab" data-filter="platne" onclick="setFilter('platne')">💚 Platne</button>
         <button class="ftab" data-filter="kontynuacja" onclick="setFilter('kontynuacja')">🟣 Kontynuacja</button>
-        <button class="ftab" data-filter="moje" onclick="setFilter('moje')">🔵 Moje</button>
       </div>
       <div class="obar">
         <button class="btn btn-ghost" onclick="showSortModal()">⇅ Sortuj</button>
@@ -262,17 +205,17 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
       </div>
     </div>
     <div class="olist" id="olist"></div>
+    <div class="version">ScanFlow v3.1 — Poprawka 4</div>
   </div>
 </div>
 
-<!-- SORT MODAL -->
 <div class="modal-bg" id="sortModal" onclick="hideSortModal(event)">
   <div class="modal-sheet">
     <div class="modal-title">Sortowanie</div>
     <div class="sort-opt active" data-sort="newest" onclick="setSort('newest')">🕐 Najnowsze</div>
     <div class="sort-opt" data-sort="oldest" onclick="setSort('oldest')">🕐 Najstarsze</div>
-    <div class="sort-opt" data-sort="longest" onclick="setSort('longest')">⬆ Najdłuższe</div>
-    <div class="sort-opt" data-sort="shortest" onclick="setSort('shortest')">⬇ Najkrótsze</div>
+    <div class="sort-opt" data-sort="longest" onclick="setSort('longest')">⬆ Najdluzsze</div>
+    <div class="sort-opt" data-sort="shortest" onclick="setSort('shortest')">⬇ Najkrotsze</div>
     <div class="sort-opt" data-sort="zlec" onclick="setSort('zlec')">🔢 Nr zlecenia</div>
   </div>
 </div>
@@ -280,62 +223,64 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 <script>
 let orders = JSON.parse(localStorage.getItem('sf_orders') || '[]');
 let curOrder = null, timerInt = null, tStart = null, elapsed = 0;
-let sortBy = 'newest', filterBy = 'all';
-let selectedType = null;
+let sortBy = 'newest', filterBy = 'all', selectedType = null;
+// continuedId — ID wpisu w historii który kontynuujemy (nie tworzymy nowego)
+let continuedId = null;
 
-// ── TYPE SELECTOR ─────────────────────────────
 function selectType(type) {
   selectedType = type;
   document.querySelectorAll('.type-btn').forEach(b => {
-    const t = b.id.replace('type-', '');
-    b.className = 'type-btn' + (t === type ? ' on-'+type : '');
+    const t = b.id.replace('type-','');
+    b.className = 'type-btn'+(t===type?' on-'+type:'');
   });
 }
 
 function typeBadge(type) {
-  const labels = { gwarancja:'🔴 Gwarancja', platne:'💚 Płatne', kontynuacja:'🟣 Kontynuacja', moje:'🔵 Moje' };
-  return `<span class="type-badge badge-${type}">${labels[type]||type}</span>`;
+  const l={gwarancja:'🔴 Gwarancja',platne:'💚 Platne',kontynuacja:'🟣 Kontynuacja'};
+  return `<span class="type-badge badge-${type}">${l[type]||type}</span>`;
 }
 
 // ── TIMER ─────────────────────────────────────
 function saveTimerState() {
-  if (curOrder && tStart) localStorage.setItem('sf_active', JSON.stringify({ order: curOrder, tStart }));
-  else localStorage.removeItem('sf_active');
+  if (curOrder && tStart) {
+    localStorage.setItem('sf_active', JSON.stringify({ order: curOrder, tStart, continuedId }));
+  } else {
+    localStorage.removeItem('sf_active');
+  }
 }
 
 function restoreTimerState() {
   const saved = localStorage.getItem('sf_active');
   if (!saved) return;
   try {
-    const { order, tStart: ts } = JSON.parse(saved);
-    curOrder = order; tStart = ts;
-    elapsed = Math.round((Date.now() - tStart) / 1000);
-    document.getElementById('curZlec').textContent = order.zlec || order.code || '—';
+    const { order, tStart: ts, continuedId: cid } = JSON.parse(saved);
+    curOrder = order; tStart = ts; continuedId = cid || null;
+    elapsed = (order.elapsedBase||0) + Math.round((Date.now()-tStart)/1000);
+    document.getElementById('curZlec').textContent = order.zlec||'—';
     document.getElementById('curZlec').classList.remove('code-empty');
-    document.getElementById('curType').innerHTML = typeBadge(order.type || 'platne');
-    if (order.desc) document.getElementById('descInput').value = order.desc;
+    document.getElementById('curType').innerHTML = typeBadge(order.type||'platne');
     document.getElementById('timerDisp').textContent = fmtSec(elapsed);
     document.getElementById('timerDisp').classList.add('run');
     document.getElementById('btnEndOrder').disabled = false;
     document.getElementById('timerBgNote').style.display = 'flex';
     startTimerTick();
-    showToast('⏱ Timer przywrócony: ' + fmtSec(elapsed));
+    showToast('⏱ Timer przywrocony: '+fmtSec(elapsed));
   } catch(e) { localStorage.removeItem('sf_active'); }
 }
 
 function startTimerTick() {
   clearInterval(timerInt);
   timerInt = setInterval(() => {
-    elapsed = Math.round((Date.now() - tStart) / 1000);
+    elapsed = (curOrder.elapsedBase||0) + Math.round((Date.now()-tStart)/1000);
     document.getElementById('timerDisp').textContent = fmtSec(elapsed);
     updateStats();
-    if (elapsed % 5 === 0) saveTimerState();
+    if (elapsed%5===0) saveTimerState();
   }, 1000);
 }
 
 document.addEventListener('visibilitychange', () => {
   if (!document.hidden && curOrder && tStart) {
-    elapsed = Math.round((Date.now() - tStart) / 1000);
+    elapsed = (curOrder.elapsedBase||0) + Math.round((Date.now()-tStart)/1000);
     document.getElementById('timerDisp').textContent = fmtSec(elapsed);
     updateStats();
   }
@@ -343,144 +288,168 @@ document.addEventListener('visibilitychange', () => {
 
 // ── TABS ──────────────────────────────────────
 function switchTab(t) {
-  document.querySelectorAll('.tab').forEach((b,i) => b.classList.toggle('on',(i===0&&t==='scanner')||(i===1&&t==='orders')));
-  document.querySelectorAll('.panel').forEach(p => p.classList.remove('on'));
+  document.querySelectorAll('.tab').forEach((b,i)=>b.classList.toggle('on',(i===0&&t==='scanner')||(i===1&&t==='orders')));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on'));
   document.getElementById('panel-'+t).classList.add('on');
-  if (t==='orders') renderOrders();
+  if(t==='orders') renderOrders();
 }
 
 // ── START ORDER ───────────────────────────────
 function startOrder(repeatData) {
-  if (curOrder) { showToast('⚠️ Najpierw zakończ aktywne zlecenie!'); return; }
+  if (curOrder) { showToast('⚠️ Najpierw zakoncz aktywne zlecenie!'); return; }
 
-  let zlec, code, desc, type;
+  let zlec, code, desc, type, elapsedBase;
+  continuedId = null;
 
   if (repeatData) {
-    // Repeat from history
+    // Kontynuacja — używamy istniejącego wpisu
     zlec = repeatData.zlec;
     code = repeatData.code;
     desc = repeatData.desc;
     type = repeatData.type;
-    selectedType = type;
+    elapsedBase = repeatData.elapsedBase;
+    continuedId = repeatData.id; // ID wpisu który aktualizujemy
   } else {
     zlec = document.getElementById('zlecInput').value.trim();
     code = document.getElementById('codeInput').value.trim();
     desc = document.getElementById('descInput').value.trim();
     type = selectedType;
-
+    elapsedBase = 0;
     if (!zlec) { showToast('❌ Wpisz numer zlecenia!'); return; }
     if (!type) { showToast('❌ Wybierz typ zlecenia!'); return; }
   }
 
-  curOrder = { id: Date.now(), zlec, code, desc, type, startTime: new Date().toISOString() };
-  tStart = Date.now(); elapsed = 0;
+  curOrder = { id: continuedId||Date.now(), zlec, code, desc, type, elapsedBase, startTime: new Date().toISOString() };
+  tStart = Date.now();
+  elapsed = elapsedBase;
 
-  // Update active order UI
-  const cv = document.getElementById('curZlec');
-  cv.textContent = zlec; cv.classList.remove('code-empty');
+  document.getElementById('curZlec').textContent = zlec;
+  document.getElementById('curZlec').classList.remove('code-empty');
   document.getElementById('curType').innerHTML = typeBadge(type);
   document.getElementById('timerDisp').classList.add('run');
-  document.getElementById('timerDisp').textContent = '00:00:00';
+  document.getElementById('timerDisp').textContent = fmtSec(elapsed);
   document.getElementById('btnEndOrder').disabled = false;
   document.getElementById('timerBgNote').style.display = 'flex';
 
   startTimerTick(); saveTimerState();
   flash(); beep();
-  showToast('▶ Zlecenie ' + zlec + ' uruchomione');
 
-  // Switch to scanner tab to show active order
+  if (elapsedBase > 0) {
+    showToast('▶ Kontynuacja '+zlec+' od '+fmtSec(elapsedBase));
+  } else {
+    showToast('▶ Zlecenie '+zlec+' uruchomione');
+  }
+
   switchTab('scanner');
 
-  // Clear inputs
   if (!repeatData) {
-    document.getElementById('zlecInput').value = '';
-    document.getElementById('codeInput').value = '';
-    document.getElementById('descInput').value = '';
-    document.querySelectorAll('.type-btn').forEach(b => b.className = 'type-btn');
-    selectedType = null;
+    document.getElementById('zlecInput').value='';
+    document.getElementById('codeInput').value='';
+    document.getElementById('descInput').value='';
+    document.querySelectorAll('.type-btn').forEach(b=>b.className='type-btn');
+    selectedType=null;
   }
 }
 
-// ── REPEAT ORDER ──────────────────────────────
+// ── KONTYNUUJ — aktualizuje istniejacy wpis ───
 function repeatOrder(id) {
-  const o = orders.find(x => x.id === id);
+  if (curOrder) { showToast('⚠️ Najpierw zakoncz aktywne zlecenie!'); return; }
+  const o = orders.find(x=>x.id===id);
   if (!o) return;
-  if (curOrder) { showToast('⚠️ Najpierw zakończ aktywne zlecenie!'); return; }
-  startOrder({ zlec: o.zlec, code: o.code, desc: o.desc, type: o.type });
+  // Przekazujemy czas z istniejacego wpisu jako bazę
+  startOrder({
+    id: o.id,
+    zlec: o.zlec,
+    code: o.code,
+    desc: o.desc,
+    type: o.type,
+    elapsedBase: o.duration || 0
+  });
 }
 
 // ── END ORDER ─────────────────────────────────
 function endOrder() {
   if (!curOrder) return;
-  clearInterval(timerInt); timerInt = null;
-  const duration = Math.round((Date.now() - tStart) / 1000);
-  orders.unshift({ ...curOrder, endTime: new Date().toISOString(), duration });
+  clearInterval(timerInt); timerInt=null;
+  const sessionSec = Math.round((Date.now()-tStart)/1000);
+  const totalDuration = (curOrder.elapsedBase||0) + sessionSec;
+
+  if (continuedId) {
+    // Aktualizuj istniejacy wpis — nie twórz nowego
+    const idx = orders.findIndex(o=>o.id===continuedId);
+    if (idx !== -1) {
+      orders[idx].duration = totalDuration;
+      orders[idx].endTime = new Date().toISOString();
+    }
+  } else {
+    // Nowe zlecenie — dodaj wpis
+    orders.unshift({
+      ...curOrder,
+      endTime: new Date().toISOString(),
+      duration: totalDuration
+    });
+  }
+
   save(); localStorage.removeItem('sf_active');
-  curOrder = null; tStart = null; elapsed = 0;
+  curOrder=null; tStart=null; elapsed=0; continuedId=null;
 
-  document.getElementById('curZlec').textContent = '— brak —';
+  document.getElementById('curZlec').textContent='— brak —';
   document.getElementById('curZlec').classList.add('code-empty');
-  document.getElementById('curType').innerHTML = '—';
-  document.getElementById('timerDisp').textContent = '00:00:00';
+  document.getElementById('curType').innerHTML='—';
+  document.getElementById('timerDisp').textContent='00:00:00';
   document.getElementById('timerDisp').classList.remove('run');
-  document.getElementById('btnEndOrder').disabled = true;
-  document.getElementById('timerBgNote').style.display = 'none';
+  document.getElementById('btnEndOrder').disabled=true;
+  document.getElementById('timerBgNote').style.display='none';
 
-  showToast('✅ Zakończono: ' + fmtDur(duration));
+  showToast('✅ Zakonczone: '+fmtDur(totalDuration));
   updateStats();
 }
 
 // ── STATS ─────────────────────────────────────
 function updateStats() {
-  const total = orders.length + (curOrder ? 1 : 0);
-  const totalSec = orders.reduce((s,o) => s+(o.duration||0), 0) + elapsed;
-  document.getElementById('hTotal').textContent = total;
-  document.getElementById('hTime').textContent = fmtDur(totalSec);
-  document.getElementById('sesOrders').textContent = total;
-  document.getElementById('sesTime').textContent = fmtDur(totalSec);
-  document.getElementById('btnClear').disabled = orders.length === 0;
+  const total = orders.length+(curOrder?1:0);
+  const totalSec = orders.reduce((s,o)=>s+(o.duration||0),0)+elapsed;
+  document.getElementById('hTotal').textContent=total;
+  document.getElementById('hTime').textContent=fmtDur(totalSec);
+  document.getElementById('sesOrders').textContent=total;
+  document.getElementById('sesTime').textContent=fmtDur(totalSec);
+  document.getElementById('btnClear').disabled=orders.length===0;
 }
 
 // ── FILTER ────────────────────────────────────
 function setFilter(f) {
-  filterBy = f;
-  document.querySelectorAll('.ftab').forEach(b => b.classList.toggle('on', b.dataset.filter === f));
+  filterBy=f;
+  document.querySelectorAll('.ftab').forEach(b=>b.classList.toggle('on',b.dataset.filter===f));
   renderOrders();
 }
 
-// ── ORDERS RENDER ─────────────────────────────
+// ── ORDERS ────────────────────────────────────
 function renderOrders() {
-  const q = document.getElementById('search').value.toLowerCase();
-  let list = orders.filter(o => {
-    const matchFilter = filterBy === 'all' || o.type === filterBy;
-    const matchSearch = (o.zlec||'').toLowerCase().includes(q) ||
-      (o.code||'').toLowerCase().includes(q) ||
-      (o.desc||'').toLowerCase().includes(q) ||
-      fmtDate(o.startTime).includes(q);
-    return matchFilter && matchSearch;
+  const q=document.getElementById('search').value.toLowerCase();
+  let list=orders.filter(o=>{
+    const mf=filterBy==='all'||o.type===filterBy;
+    const ms=(o.zlec||'').toLowerCase().includes(q)||(o.code||'').toLowerCase().includes(q)||(o.desc||'').toLowerCase().includes(q)||fmtDate(o.startTime).includes(q);
+    return mf&&ms;
   });
-
-  list.sort((a,b) => {
-    if (sortBy==='newest') return new Date(b.startTime)-new Date(a.startTime);
-    if (sortBy==='oldest') return new Date(a.startTime)-new Date(b.startTime);
-    if (sortBy==='longest') return (b.duration||0)-(a.duration||0);
-    if (sortBy==='shortest') return (a.duration||0)-(b.duration||0);
-    if (sortBy==='zlec') return (a.zlec||'').localeCompare(b.zlec||'');
+  list.sort((a,b)=>{
+    if(sortBy==='newest') return new Date(b.startTime)-new Date(a.startTime);
+    if(sortBy==='oldest') return new Date(a.startTime)-new Date(b.startTime);
+    if(sortBy==='longest') return (b.duration||0)-(a.duration||0);
+    if(sortBy==='shortest') return (a.duration||0)-(b.duration||0);
+    if(sortBy==='zlec') return (a.zlec||'').localeCompare(b.zlec||'');
     return 0;
   });
-
-  const el = document.getElementById('olist');
-  if (list.length === 0) {
-    el.innerHTML = `<div class="nodata"><div class="icon">${orders.length===0?'📋':'🔍'}</div><p>${orders.length===0?'Brak zleceń — zacznij od nowego!':'Brak wyników'}</p></div>`;
+  const el=document.getElementById('olist');
+  if(list.length===0){
+    el.innerHTML=`<div class="nodata"><div class="icon">${orders.length===0?'📋':'🔍'}</div><p>${orders.length===0?'Brak zlecen — zacznij od nowego!':'Brak wynikow'}</p></div>`;
     return;
   }
-
-  el.innerHTML = list.map((o,i) => `
+  el.innerHTML=list.map((o,i)=>`
     <div class="orow">
       <div class="orow-top">
         <div class="onum">${list.length-i}</div>
         <div class="oinfo">
-          <div class="ocode">${esc(o.zlec||o.code||'—')}</div>
+          <div class="ocode">${esc(o.zlec||'—')}</div>
           <div class="odate">${fmtDate(o.startTime)}</div>
         </div>
         <div class="odur">${fmtDur(o.duration||0)}</div>
@@ -489,95 +458,60 @@ function renderOrders() {
       ${o.code?`<div class="odesc">🔑 Kod: ${esc(o.code)}</div>`:''}
       ${o.desc?`<div class="odesc">📝 ${esc(o.desc)}</div>`:''}
       <div class="orow-btns">
-        <button class="orow-btn btn-rep" onclick="repeatOrder(${o.id})">🔁 Powtórz zlecenie</button>
-        <button class="orow-btn btn-del" onclick="delOrder(${o.id})">🗑 Usuń</button>
+        <button class="orow-btn btn-rep" onclick="repeatOrder(${o.id})">🔁 Kontynuuj zlecenie</button>
+        <button class="orow-btn btn-del" onclick="delOrder(${o.id})">🗑 Usun</button>
       </div>
     </div>`).join('');
 }
 
-function delOrder(id) {
-  if (!confirm('Usunąć to zlecenie?')) return;
-  orders = orders.filter(o => o.id !== id);
-  save(); renderOrders(); showToast('🗑 Usunięto');
-}
-
-function clearAll() {
-  if (!confirm('Usunąć wszystkie zlecenia?')) return;
-  orders = []; save(); renderOrders(); showToast('🗑 Wyczyszczono');
-}
-
-function showSortModal() { document.getElementById('sortModal').classList.add('show'); }
-function hideSortModal(e) { if(e.target===document.getElementById('sortModal')) document.getElementById('sortModal').classList.remove('show'); }
-function setSort(s) {
-  sortBy = s;
-  document.querySelectorAll('.sort-opt').forEach(el => el.classList.toggle('active', el.dataset.sort===s));
-  document.getElementById('sortModal').classList.remove('show');
-  renderOrders();
-}
+function delOrder(id){if(!confirm('Usunac to zlecenie?'))return;orders=orders.filter(o=>o.id!==id);save();renderOrders();showToast('🗑 Usunieto');}
+function clearAll(){if(!confirm('Usunac wszystkie zlecenia?'))return;orders=[];save();renderOrders();showToast('🗑 Wyczyszczono');}
+function showSortModal(){document.getElementById('sortModal').classList.add('show');}
+function hideSortModal(e){if(e.target===document.getElementById('sortModal'))document.getElementById('sortModal').classList.remove('show');}
+function setSort(s){sortBy=s;document.querySelectorAll('.sort-opt').forEach(el=>el.classList.toggle('active',el.dataset.sort===s));document.getElementById('sortModal').classList.remove('show');renderOrders();}
 
 // ── PDF ───────────────────────────────────────
-function exportPDF() {
-  if (orders.length===0) { showToast('❌ Brak zleceń'); return; }
-  const {jsPDF} = window.jspdf; const doc = new jsPDF();
-  const totalSec = orders.reduce((s,o)=>s+(o.duration||0),0); const now = new Date();
-
-  doc.setFillColor(11,13,18); doc.rect(0,0,210,38,'F');
-  doc.setTextColor(0,212,255); doc.setFontSize(20); doc.setFont('helvetica','bold'); doc.text('ScanFlow',14,16);
-  doc.setFontSize(9); doc.setFont('helvetica','normal'); doc.setTextColor(150,160,180);
-  doc.text('Raport zleceń',14,24); doc.text('Wygenerowano: '+fmtDate(now),14,31);
-
-  doc.setFillColor(22,26,36); doc.roundedRect(14,44,182,22,3,3,'F');
-  doc.setTextColor(57,255,20); doc.setFontSize(13); doc.setFont('helvetica','bold');
-  doc.text('Zleceń: '+orders.length,20,58);
-  doc.text('Łącznie: '+fmtDur(totalSec),85,58);
-  doc.text('Średnio: '+fmtDur(Math.round(totalSec/orders.length)),152,58);
-
-  const typeLabel = { gwarancja:'Gwarancja', platne:'Płatne', kontynuacja:'Kontynuacja', moje:'Moje' };
-
+function exportPDF(){
+  if(orders.length===0){showToast('❌ Brak zlecen');return;}
+  const{jsPDF}=window.jspdf;const doc=new jsPDF();
+  const totalSec=orders.reduce((s,o)=>s+(o.duration||0),0);const now=new Date();
+  doc.setFillColor(11,13,18);doc.rect(0,0,210,38,'F');
+  doc.setTextColor(0,212,255);doc.setFontSize(20);doc.setFont('helvetica','bold');doc.text('ScanFlow',14,16);
+  doc.setFontSize(9);doc.setFont('helvetica','normal');doc.setTextColor(150,160,180);
+  doc.text('Raport zlecen v3.1',14,24);doc.text('Wygenerowano: '+fmtDate(now),14,31);
+  doc.setFillColor(22,26,36);doc.roundedRect(14,44,182,22,3,3,'F');
+  doc.setTextColor(57,255,20);doc.setFontSize(13);doc.setFont('helvetica','bold');
+  doc.text('Zlecen: '+orders.length,20,58);
+  doc.text('Lacznie: '+fmtDur(totalSec),85,58);
+  doc.text('Sredni: '+fmtDur(Math.round(totalSec/orders.length)),152,58);
+  const tl={gwarancja:'Gwarancja',platne:'Platne',kontynuacja:'Kontynuacja'};
   doc.autoTable({
-    startY: 72,
-    head: [['#','Nr zlecenia','Typ','Opis','Data','Czas']],
-    body: orders.map((o,i) => [
-      i+1,
-      o.zlec||o.code||'—',
-      typeLabel[o.type]||o.type||'—',
-      o.desc||'—',
-      fmtDate(o.startTime),
-      fmtDur(o.duration||0)
-    ]),
-    theme: 'grid',
-    headStyles: { fillColor:[17,19,24], textColor:[0,212,255], fontStyle:'bold', fontSize:8 },
-    bodyStyles: { textColor:[200,210,230], fillColor:[11,13,18], fontSize:7 },
-    alternateRowStyles: { fillColor:[17,19,24] },
-    columnStyles: {
-      0:{cellWidth:10,halign:'center'},
-      1:{cellWidth:30,textColor:[0,212,255]},
-      2:{cellWidth:25},
-      3:{cellWidth:55},
-      5:{halign:'center',textColor:[57,255,20]}
-    },
-    margin: {left:14,right:14}
+    startY:72,
+    head:[['#','Nr zlecenia','Typ','Uwagi','Data','Czas']],
+    body:orders.map((o,i)=>[i+1,o.zlec||'—',tl[o.type]||'—',o.desc||'—',fmtDate(o.startTime),fmtDur(o.duration||0)]),
+    theme:'grid',
+    headStyles:{fillColor:[17,19,24],textColor:[0,212,255],fontStyle:'bold',fontSize:8},
+    bodyStyles:{textColor:[200,210,230],fillColor:[11,13,18],fontSize:7},
+    alternateRowStyles:{fillColor:[17,19,24]},
+    columnStyles:{0:{cellWidth:10,halign:'center'},1:{cellWidth:28,textColor:[0,212,255]},2:{cellWidth:25},3:{cellWidth:57},5:{halign:'center',textColor:[57,255,20]}},
+    margin:{left:14,right:14}
   });
-
   doc.save('scanflow_'+now.toISOString().slice(0,10)+'.pdf');
   showToast('📄 PDF zapisany!');
 }
 
-// ── UTILS ─────────────────────────────────────
 function save(){localStorage.setItem('sf_orders',JSON.stringify(orders));updateStats();}
 function fmtSec(s){return[Math.floor(s/3600),Math.floor((s%3600)/60),s%60].map(v=>String(v).padStart(2,'0')).join(':');}
 function fmtDur(s){if(s<60)return s+'s';if(s<3600)return Math.floor(s/60)+'m '+(s%60)+'s';return Math.floor(s/3600)+'h '+Math.floor((s%3600)/60)+'m';}
 function fmtDate(d){const dt=new Date(d);return dt.toLocaleDateString('pl-PL')+' '+dt.toLocaleTimeString('pl-PL',{hour:'2-digit',minute:'2-digit',second:'2-digit'});}
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
-function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),3000);}
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),3500);}
 function flash(){const f=document.getElementById('flash');f.classList.add('go');setTimeout(()=>f.classList.remove('go'),150);}
 function beep(){try{const ctx=new(window.AudioContext||window.webkitAudioContext)();const o=ctx.createOscillator();const g=ctx.createGain();o.connect(g);g.connect(ctx.destination);o.frequency.value=1200;o.type='sine';g.gain.setValueAtTime(0.3,ctx.currentTime);g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.15);o.start(ctx.currentTime);o.stop(ctx.currentTime+0.15);}catch(e){}}
 
-// Enter on inputs
 document.getElementById('zlecInput').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('codeInput').focus();});
-document.getElementById('codeInput').addEventListener('keydown',e=>{if(e.key==='Enter')startOrder();});
-
-updateStats(); renderOrders(); restoreTimerState();
+document.getElementById('codeInput').addEventListener('keydown',e=>{if(e.key==='Enter')startOrder(null);});
+updateStats();renderOrders();restoreTimerState();
 </script>
 </body>
 </html>
