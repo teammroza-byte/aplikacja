@@ -89,6 +89,8 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 .ftabs::-webkit-scrollbar{display:none}
 .ftab{flex-shrink:0;padding:6px 12px;border-radius:8px;border:1px solid var(--border);background:var(--s2);color:var(--muted);font-size:.75rem;font-weight:600;cursor:pointer;transition:all .2s;white-space:nowrap}
 .ftab.on{background:var(--s1);color:var(--accent);border-color:var(--accent)}
+.period-summary{display:flex;justify-content:space-between;gap:8px;background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:9px 13px;font-family:'JetBrains Mono',monospace;font-size:.8rem;color:var(--accent)}
+.period-summary:empty{display:none}
 .olist{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:6px 12px 20px}
 .orow{background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:8px}
 .orow-top{display:flex;align-items:center;gap:8px}
@@ -137,7 +139,6 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
     <button class="tab on" onclick="switchTab('scanner')">📝 Nowe zlecenie</button>
     <button class="tab" onclick="switchTab('orders')">📋 Zlecenia</button>
   </div>
-
   <div class="panel on" id="panel-scanner">
     <div class="panel-inner">
       <div class="card">
@@ -173,7 +174,7 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
           <div class="timer-val" id="timerDisp">00:00:00</div>
           <div class="timer-bg-note" id="timerBgNote">
             <div class="timer-bg-dot"></div>
-            Timer dziala w tle
+Timer dziala w tle
           </div>
         </div>
         <button class="btn btn-stop" id="btnEndOrder" onclick="endOrder()" disabled style="margin-top:10px;">⏹ STOP — Zakoncz zlecenie</button>
@@ -186,9 +187,8 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
         </div>
       </div>
     </div>
-    <div class="version">ScanFlow v3.1 — Poprawka 4</div>
+    <div class="version">ScanFlow v3.2 — Filtr miesięcy</div>
   </div>
-
   <div class="panel" id="panel-orders">
     <div class="ocontrols">
       <input class="sbox" id="search" placeholder="🔍 Szukaj numeru, kodu, uwag..." oninput="renderOrders()">
@@ -198,17 +198,18 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
         <button class="ftab" data-filter="platne" onclick="setFilter('platne')">💚 Platne</button>
         <button class="ftab" data-filter="kontynuacja" onclick="setFilter('kontynuacja')">🟣 Kontynuacja</button>
       </div>
+      <div class="ftabs" id="periodTabs"></div>
       <div class="obar">
         <button class="btn btn-ghost" onclick="showSortModal()">⇅ Sortuj</button>
         <button class="btn btn-success" onclick="exportPDF()">📄 PDF</button>
         <button class="btn btn-danger" id="btnClear" onclick="clearAll()" disabled>🗑</button>
       </div>
+      <div class="period-summary" id="periodSummary"></div>
     </div>
     <div class="olist" id="olist"></div>
-    <div class="version">ScanFlow v3.1 — Poprawka 4</div>
+    <div class="version">ScanFlow v3.2 — Filtr miesięcy</div>
   </div>
 </div>
-
 <div class="modal-bg" id="sortModal" onclick="hideSortModal(event)">
   <div class="modal-sheet">
     <div class="modal-title">Sortowanie</div>
@@ -219,14 +220,12 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
     <div class="sort-opt" data-sort="zlec" onclick="setSort('zlec')">🔢 Nr zlecenia</div>
   </div>
 </div>
-
 <script>
 let orders = JSON.parse(localStorage.getItem('sf_orders') || '[]');
 let curOrder = null, timerInt = null, tStart = null, elapsed = 0;
 let sortBy = 'newest', filterBy = 'all', selectedType = null;
 // continuedId — ID wpisu w historii który kontynuujemy (nie tworzymy nowego)
 let continuedId = null;
-
 function selectType(type) {
   selectedType = type;
   document.querySelectorAll('.type-btn').forEach(b => {
@@ -234,12 +233,10 @@ function selectType(type) {
     b.className = 'type-btn'+(t===type?' on-'+type:'');
   });
 }
-
 function typeBadge(type) {
   const l={gwarancja:'🔴 Gwarancja',platne:'💚 Platne',kontynuacja:'🟣 Kontynuacja'};
   return `<span class="type-badge badge-${type}">${l[type]||type}</span>`;
 }
-
 // ── TIMER ─────────────────────────────────────
 function saveTimerState() {
   if (curOrder && tStart) {
@@ -248,7 +245,6 @@ function saveTimerState() {
     localStorage.removeItem('sf_active');
   }
 }
-
 function restoreTimerState() {
   const saved = localStorage.getItem('sf_active');
   if (!saved) return;
@@ -267,7 +263,6 @@ function restoreTimerState() {
     showToast('⏱ Timer przywrocony: '+fmtSec(elapsed));
   } catch(e) { localStorage.removeItem('sf_active'); }
 }
-
 function startTimerTick() {
   clearInterval(timerInt);
   timerInt = setInterval(() => {
@@ -277,7 +272,6 @@ function startTimerTick() {
     if (elapsed%5===0) saveTimerState();
   }, 1000);
 }
-
 document.addEventListener('visibilitychange', () => {
   if (!document.hidden && curOrder && tStart) {
     elapsed = (curOrder.elapsedBase||0) + Math.round((Date.now()-tStart)/1000);
@@ -285,7 +279,6 @@ document.addEventListener('visibilitychange', () => {
     updateStats();
   }
 });
-
 // ── TABS ──────────────────────────────────────
 function switchTab(t) {
   document.querySelectorAll('.tab').forEach((b,i)=>b.classList.toggle('on',(i===0&&t==='scanner')||(i===1&&t==='orders')));
@@ -293,14 +286,11 @@ function switchTab(t) {
   document.getElementById('panel-'+t).classList.add('on');
   if(t==='orders') renderOrders();
 }
-
 // ── START ORDER ───────────────────────────────
 function startOrder(repeatData) {
   if (curOrder) { showToast('⚠️ Najpierw zakoncz aktywne zlecenie!'); return; }
-
   let zlec, code, desc, type, elapsedBase;
   continuedId = null;
-
   if (repeatData) {
     // Kontynuacja — używamy istniejącego wpisu
     zlec = repeatData.zlec;
@@ -318,11 +308,9 @@ function startOrder(repeatData) {
     if (!zlec) { showToast('❌ Wpisz numer zlecenia!'); return; }
     if (!type) { showToast('❌ Wybierz typ zlecenia!'); return; }
   }
-
   curOrder = { id: continuedId||Date.now(), zlec, code, desc, type, elapsedBase, startTime: new Date().toISOString() };
   tStart = Date.now();
   elapsed = elapsedBase;
-
   document.getElementById('curZlec').textContent = zlec;
   document.getElementById('curZlec').classList.remove('code-empty');
   document.getElementById('curType').innerHTML = typeBadge(type);
@@ -330,18 +318,14 @@ function startOrder(repeatData) {
   document.getElementById('timerDisp').textContent = fmtSec(elapsed);
   document.getElementById('btnEndOrder').disabled = false;
   document.getElementById('timerBgNote').style.display = 'flex';
-
   startTimerTick(); saveTimerState();
   flash(); beep();
-
   if (elapsedBase > 0) {
     showToast('▶ Kontynuacja '+zlec+' od '+fmtSec(elapsedBase));
   } else {
     showToast('▶ Zlecenie '+zlec+' uruchomione');
   }
-
   switchTab('scanner');
-
   if (!repeatData) {
     document.getElementById('zlecInput').value='';
     document.getElementById('codeInput').value='';
@@ -350,7 +334,6 @@ function startOrder(repeatData) {
     selectedType=null;
   }
 }
-
 // ── KONTYNUUJ — aktualizuje istniejacy wpis ───
 function repeatOrder(id) {
   if (curOrder) { showToast('⚠️ Najpierw zakoncz aktywne zlecenie!'); return; }
@@ -366,14 +349,12 @@ function repeatOrder(id) {
     elapsedBase: o.duration || 0
   });
 }
-
 // ── END ORDER ─────────────────────────────────
 function endOrder() {
   if (!curOrder) return;
   clearInterval(timerInt); timerInt=null;
   const sessionSec = Math.round((Date.now()-tStart)/1000);
   const totalDuration = (curOrder.elapsedBase||0) + sessionSec;
-
   if (continuedId) {
     // Aktualizuj istniejacy wpis — nie twórz nowego
     const idx = orders.findIndex(o=>o.id===continuedId);
@@ -389,10 +370,8 @@ function endOrder() {
       duration: totalDuration
     });
   }
-
   save(); localStorage.removeItem('sf_active');
   curOrder=null; tStart=null; elapsed=0; continuedId=null;
-
   document.getElementById('curZlec').textContent='— brak —';
   document.getElementById('curZlec').classList.add('code-empty');
   document.getElementById('curType').innerHTML='—';
@@ -400,11 +379,9 @@ function endOrder() {
   document.getElementById('timerDisp').classList.remove('run');
   document.getElementById('btnEndOrder').disabled=true;
   document.getElementById('timerBgNote').style.display='none';
-
   showToast('✅ Zakonczone: '+fmtDur(totalDuration));
   updateStats();
 }
-
 // ── STATS ─────────────────────────────────────
 function updateStats() {
   const total = orders.length+(curOrder?1:0);
@@ -415,22 +392,44 @@ function updateStats() {
   document.getElementById('sesTime').textContent=fmtDur(totalSec);
   document.getElementById('btnClear').disabled=orders.length===0;
 }
-
 // ── FILTER ────────────────────────────────────
 function setFilter(f) {
   filterBy=f;
-  document.querySelectorAll('.ftab').forEach(b=>b.classList.toggle('on',b.dataset.filter===f));
+  document.querySelectorAll('.ftab[data-filter]').forEach(b=>b.classList.toggle('on',b.dataset.filter===f));
   renderOrders();
 }
-
+// ── FILTR OKRESU (miesiąc / rok) ──────────────
+const SF_MONTHS=['Styczeń','Luty','Marzec','Kwiecień','Maj','Czerwiec','Lipiec','Sierpień','Wrzesień','Październik','Listopad','Grudzień'];
+let periodBy='all';
+function periodKey(o){const d=new Date(o.startTime);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');}
+function periodLabel(key){const p=key.split('-');return SF_MONTHS[parseInt(p[1],10)-1]+' '+p[0];}
+function curPeriodKey(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');}
+function renderPeriodTabs(){
+  const el=document.getElementById('periodTabs');
+  if(!el) return;
+  const cur=curPeriodKey();
+  const keys=[...new Set(orders.map(periodKey))].sort((a,b)=>b.localeCompare(a));
+  let html='<button class="ftab'+(periodBy==='all'?' on':'')+'" onclick="setPeriod(\'all\')">📅 Wszystkie</button>';
+  keys.forEach(k=>{
+    const lbl=periodLabel(k)+(k===cur?' • ten mies.':'');
+    html+='<button class="ftab'+(periodBy===k?' on':'')+'" onclick="setPeriod(\''+k+'\')">'+lbl+'</button>';
+  });
+  el.innerHTML=html;
+}
+function setPeriod(p){periodBy=p;renderPeriodTabs();renderOrders();}
 // ── ORDERS ────────────────────────────────────
 function renderOrders() {
+  renderPeriodTabs();
   const q=document.getElementById('search').value.toLowerCase();
   let list=orders.filter(o=>{
     const mf=filterBy==='all'||o.type===filterBy;
+    const mp=periodBy==='all'||periodKey(o)===periodBy;
     const ms=(o.zlec||'').toLowerCase().includes(q)||(o.code||'').toLowerCase().includes(q)||(o.desc||'').toLowerCase().includes(q)||fmtDate(o.startTime).includes(q);
-    return mf&&ms;
+    return mf&&mp&&ms;
   });
+  const sumSec=list.reduce((s,o)=>s+(o.duration||0),0);
+  const sumEl=document.getElementById('periodSummary');
+  if(sumEl) sumEl.innerHTML=list.length?('<span>📊 '+list.length+' zlecen</span><span>⏱ '+fmtDur(sumSec)+'</span>'):'';
   list.sort((a,b)=>{
     if(sortBy==='newest') return new Date(b.startTime)-new Date(a.startTime);
     if(sortBy==='oldest') return new Date(a.startTime)-new Date(b.startTime);
@@ -445,31 +444,29 @@ function renderOrders() {
     return;
   }
   el.innerHTML=list.map((o,i)=>`
-    <div class="orow">
-      <div class="orow-top">
-        <div class="onum">${list.length-i}</div>
-        <div class="oinfo">
-          <div class="ocode">${esc(o.zlec||'—')}</div>
-          <div class="odate">${fmtDate(o.startTime)}</div>
-        </div>
-        <div class="odur">${fmtDur(o.duration||0)}</div>
-      </div>
-      <div style="margin-top:6px;">${typeBadge(o.type||'platne')}</div>
+<div class="orow">
+<div class="orow-top">
+<div class="onum">${list.length-i}</div>
+<div class="oinfo">
+<div class="ocode">${esc(o.zlec||'—')}</div>
+<div class="odate">${fmtDate(o.startTime)}</div>
+</div>
+<div class="odur">${fmtDur(o.duration||0)}</div>
+</div>
+<div style="margin-top:6px;">${typeBadge(o.type||'platne')}</div>
       ${o.code?`<div class="odesc">🔑 Kod: ${esc(o.code)}</div>`:''}
       ${o.desc?`<div class="odesc">📝 ${esc(o.desc)}</div>`:''}
-      <div class="orow-btns">
-        <button class="orow-btn btn-rep" onclick="repeatOrder(${o.id})">🔁 Kontynuuj zlecenie</button>
-        <button class="orow-btn btn-del" onclick="delOrder(${o.id})">🗑 Usun</button>
-      </div>
-    </div>`).join('');
+<div class="orow-btns">
+<button class="orow-btn btn-rep" onclick="repeatOrder(${o.id})">🔁 Kontynuuj zlecenie</button>
+<button class="orow-btn btn-del" onclick="delOrder(${o.id})">🗑 Usun</button>
+</div>
+</div>`).join('');
 }
-
 function delOrder(id){if(!confirm('Usunac to zlecenie?'))return;orders=orders.filter(o=>o.id!==id);save();renderOrders();showToast('🗑 Usunieto');}
 function clearAll(){if(!confirm('Usunac wszystkie zlecenia?'))return;orders=[];save();renderOrders();showToast('🗑 Wyczyszczono');}
 function showSortModal(){document.getElementById('sortModal').classList.add('show');}
 function hideSortModal(e){if(e.target===document.getElementById('sortModal'))document.getElementById('sortModal').classList.remove('show');}
 function setSort(s){sortBy=s;document.querySelectorAll('.sort-opt').forEach(el=>el.classList.toggle('active',el.dataset.sort===s));document.getElementById('sortModal').classList.remove('show');renderOrders();}
-
 // ── PDF ───────────────────────────────────────
 function exportPDF(){
   if(orders.length===0){showToast('❌ Brak zlecen');return;}
@@ -478,7 +475,7 @@ function exportPDF(){
   doc.setFillColor(11,13,18);doc.rect(0,0,210,38,'F');
   doc.setTextColor(0,212,255);doc.setFontSize(20);doc.setFont('helvetica','bold');doc.text('ScanFlow',14,16);
   doc.setFontSize(9);doc.setFont('helvetica','normal');doc.setTextColor(150,160,180);
-  doc.text('Raport zlecen v3.1',14,24);doc.text('Wygenerowano: '+fmtDate(now),14,31);
+  doc.text('Raport zlecen v3.2',14,24);doc.text('Wygenerowano: '+fmtDate(now),14,31);
   doc.setFillColor(22,26,36);doc.roundedRect(14,44,182,22,3,3,'F');
   doc.setTextColor(57,255,20);doc.setFontSize(13);doc.setFont('helvetica','bold');
   doc.text('Zlecen: '+orders.length,20,58);
@@ -499,7 +496,6 @@ function exportPDF(){
   doc.save('scanflow_'+now.toISOString().slice(0,10)+'.pdf');
   showToast('📄 PDF zapisany!');
 }
-
 function save(){localStorage.setItem('sf_orders',JSON.stringify(orders));updateStats();}
 function fmtSec(s){return[Math.floor(s/3600),Math.floor((s%3600)/60),s%60].map(v=>String(v).padStart(2,'0')).join(':');}
 function fmtDur(s){if(s<60)return s+'s';if(s<3600)return Math.floor(s/60)+'m '+(s%60)+'s';return Math.floor(s/3600)+'h '+Math.floor((s%3600)/60)+'m';}
@@ -508,7 +504,6 @@ function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').repl
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),3500);}
 function flash(){const f=document.getElementById('flash');f.classList.add('go');setTimeout(()=>f.classList.remove('go'),150);}
 function beep(){try{const ctx=new(window.AudioContext||window.webkitAudioContext)();const o=ctx.createOscillator();const g=ctx.createGain();o.connect(g);g.connect(ctx.destination);o.frequency.value=1200;o.type='sine';g.gain.setValueAtTime(0.3,ctx.currentTime);g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.15);o.start(ctx.currentTime);o.stop(ctx.currentTime+0.15);}catch(e){}}
-
 document.getElementById('zlecInput').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('codeInput').focus();});
 document.getElementById('codeInput').addEventListener('keydown',e=>{if(e.key==='Enter')startOrder(null);});
 updateStats();renderOrders();restoreTimerState();
