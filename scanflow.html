@@ -45,6 +45,9 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 .type-btn.on-gwarancja{border-color:#ff9500;background:rgba(255,149,0,.18);color:#ff9500}
 .type-btn.on-platne{border-color:var(--success);background:rgba(0,230,118,.18);color:var(--success)}
 .type-btn.on-kontynuacja{border-color:#bf5af2;background:rgba(191,90,242,.18);color:#bf5af2}
+.work-selector{display:flex;gap:6px;margin-bottom:8px}
+.work-btn{flex:1;padding:11px 6px;border-radius:10px;border:2px solid var(--border);background:var(--s2);color:var(--muted);font-family:'Sora',sans-serif;font-size:.8rem;font-weight:700;cursor:pointer;transition:all .2s;text-align:center}
+.work-btn.on{border-color:var(--accent);background:rgba(0,212,255,.15);color:var(--accent)}
 .type-badge{display:inline-block;padding:3px 10px;border-radius:6px;font-size:.72rem;font-weight:700;letter-spacing:.5px}
 .badge-gwarancja{background:rgba(255,149,0,.15);color:#ff9500;border:1px solid rgba(255,149,0,.3)}
 .badge-platne{background:rgba(0,230,118,.15);color:var(--success);border:1px solid rgba(0,230,118,.3)}
@@ -104,6 +107,7 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 .orow-btn:active{transform:scale(.96)}
 .btn-rep{background:rgba(191,90,242,.15);color:#bf5af2;border:1px solid rgba(191,90,242,.3)}
 .btn-del{background:rgba(255,58,92,.1);color:var(--danger);border:1px solid rgba(255,58,92,.2)}
+.btn-edit{background:rgba(0,212,255,.12);color:var(--accent);border:1px solid rgba(0,212,255,.3)}
 .odesc{font-size:.78rem;color:var(--muted);margin-top:5px;font-style:italic}
 .nodata{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--muted);padding:40px}
 .nodata .icon{font-size:2.5rem;opacity:.25}
@@ -155,6 +159,13 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
         <div class="irow"><input class="minput" id="zlecInput" placeholder="np. 26222" autocomplete="off" inputmode="numeric"></div>
         <span class="ilbl">Kod z samochodu (opcjonalny)</span>
         <div class="irow"><input class="minput" id="codeInput" placeholder="np. 56750209" autocomplete="off"></div>
+        <span class="ilbl">Rodzaj pracy</span>
+        <div class="work-selector">
+          <button class="work-btn" data-work="Przeglad" onclick="selectWork('Przeglad')">Przeglad</button>
+          <button class="work-btn" data-work="Wymiana oleju" onclick="selectWork('Wymiana oleju')">Wymiana oleju</button>
+          <button class="work-btn" data-work="Inne" onclick="selectWork('Inne')">Inne</button>
+        </div>
+        <input class="minput" id="workOther" placeholder="Wpisz rodzaj pracy..." autocomplete="off" style="display:none;width:100%;margin-bottom:8px;">
         <span class="ilbl">Uwagi</span>
         <textarea class="desc-input" id="descInput" placeholder="Np. wymiana oleju, klient czeka..."></textarea>
         <button class="btn btn-primary" style="margin-top:12px;" onclick="startOrder(null)">▶ Uruchom timer</button>
@@ -170,6 +181,10 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
           <div id="curType">—</div>
         </div>
         <div class="ibox">
+          <div class="ilbl">Rodzaj pracy</div>
+          <div id="curWork">—</div>
+        </div>
+        <div class="ibox">
           <div class="ilbl">Czas trwania</div>
           <div class="timer-val" id="timerDisp">00:00:00</div>
           <div class="timer-bg-note" id="timerBgNote">
@@ -178,6 +193,7 @@ Timer dziala w tle
           </div>
         </div>
         <button class="btn btn-stop" id="btnEndOrder" onclick="endOrder()" disabled style="margin-top:10px;">⏹ STOP — Zakoncz zlecenie</button>
+        <button class="btn btn-ghost" id="btnEditActive" onclick="editActive()" disabled style="margin-top:8px;">✏️ Edytuj dane zlecenia</button>
       </div>
       <div class="card">
         <div class="ctitle">Sesja</div>
@@ -187,7 +203,7 @@ Timer dziala w tle
         </div>
       </div>
     </div>
-    <div class="version">ScanFlow v3.2 — Filtr miesięcy</div>
+    <div class="version">ScanFlow v3.3 — Rodzaje + edycja</div>
   </div>
   <div class="panel" id="panel-orders">
     <div class="ocontrols">
@@ -201,13 +217,14 @@ Timer dziala w tle
       <div class="ftabs" id="periodTabs"></div>
       <div class="obar">
         <button class="btn btn-ghost" onclick="showSortModal()">⇅ Sortuj</button>
-        <button class="btn btn-success" onclick="exportPDF()">📄 PDF</button>
+        <button class="btn btn-success" onclick="buildPdf(false)">📄 PDF</button>
+        <button class="btn btn-ghost" onclick="buildPdf(true)">🖨 Druk</button>
         <button class="btn btn-danger" id="btnClear" onclick="clearAll()" disabled>🗑</button>
       </div>
       <div class="period-summary" id="periodSummary"></div>
     </div>
     <div class="olist" id="olist"></div>
-    <div class="version">ScanFlow v3.2 — Filtr miesięcy</div>
+    <div class="version">ScanFlow v3.3 — Rodzaje + edycja</div>
   </div>
 </div>
 <div class="modal-bg" id="sortModal" onclick="hideSortModal(event)">
@@ -220,10 +237,35 @@ Timer dziala w tle
     <div class="sort-opt" data-sort="zlec" onclick="setSort('zlec')">🔢 Nr zlecenia</div>
   </div>
 </div>
+<div class="modal-bg" id="editModal" onclick="hideEditModal(event)">
+  <div class="modal-sheet">
+    <div class="modal-title">Edytuj zlecenie</div>
+    <span class="ilbl">Numer zlecenia</span>
+    <div class="irow"><input class="minput" id="edZlec" autocomplete="off"></div>
+    <span class="ilbl">Rodzaj pracy</span>
+    <div class="irow"><input class="minput" id="edWork" placeholder="np. Przeglad, Wymiana oleju" autocomplete="off"></div>
+    <span class="ilbl">Kod z samochodu</span>
+    <div class="irow"><input class="minput" id="edCode" autocomplete="off"></div>
+    <span class="ilbl">Uwagi</span>
+    <textarea class="desc-input" id="edDesc" placeholder="Uwagi..."></textarea>
+    <div id="edTimeWrap">
+      <span class="ilbl" style="margin-top:8px;">Czas — godziny / minuty</span>
+      <div class="irow">
+        <input class="minput" id="edH" inputmode="numeric" placeholder="godz" autocomplete="off">
+        <input class="minput" id="edM" inputmode="numeric" placeholder="min" autocomplete="off">
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-ghost" onclick="hideEditModal()">Anuluj</button>
+      <button class="btn btn-primary" onclick="saveEdit()">💾 Zapisz</button>
+    </div>
+  </div>
+</div>
 <script>
 let orders = JSON.parse(localStorage.getItem('sf_orders') || '[]');
 let curOrder = null, timerInt = null, tStart = null, elapsed = 0;
 let sortBy = 'newest', filterBy = 'all', selectedType = null;
+let selectedWork = null, editTarget = null;
 // continuedId — ID wpisu w historii który kontynuujemy (nie tworzymy nowego)
 let continuedId = null;
 function selectType(type) {
@@ -232,6 +274,19 @@ function selectType(type) {
     const t = b.id.replace('type-','');
     b.className = 'type-btn'+(t===type?' on-'+type:'');
   });
+}
+function selectWork(w) {
+  selectedWork = w;
+  document.querySelectorAll('.work-btn').forEach(b => b.classList.toggle('on', b.dataset.work===w));
+  const other = document.getElementById('workOther');
+  other.style.display = (w==='Inne') ? 'block' : 'none';
+  if (w==='Inne') other.focus();
+}
+function currentWorkValue() {
+  if (selectedWork==='Inne') {
+    return document.getElementById('workOther').value.trim() || 'Inne';
+  }
+  return selectedWork || '';
 }
 function typeBadge(type) {
   const l={gwarancja:'🔴 Gwarancja',platne:'💚 Platne',kontynuacja:'🟣 Kontynuacja'};
@@ -255,9 +310,11 @@ function restoreTimerState() {
     document.getElementById('curZlec').textContent = order.zlec||'—';
     document.getElementById('curZlec').classList.remove('code-empty');
     document.getElementById('curType').innerHTML = typeBadge(order.type||'platne');
+    document.getElementById('curWork').textContent = order.work || '—';
     document.getElementById('timerDisp').textContent = fmtSec(elapsed);
     document.getElementById('timerDisp').classList.add('run');
     document.getElementById('btnEndOrder').disabled = false;
+    document.getElementById('btnEditActive').disabled = false;
     document.getElementById('timerBgNote').style.display = 'flex';
     startTimerTick();
     showToast('⏱ Timer przywrocony: '+fmtSec(elapsed));
@@ -289,7 +346,7 @@ function switchTab(t) {
 // ── START ORDER ───────────────────────────────
 function startOrder(repeatData) {
   if (curOrder) { showToast('⚠️ Najpierw zakoncz aktywne zlecenie!'); return; }
-  let zlec, code, desc, type, elapsedBase;
+  let zlec, code, desc, type, work, elapsedBase;
   continuedId = null;
   if (repeatData) {
     // Kontynuacja — używamy istniejącego wpisu
@@ -297,6 +354,7 @@ function startOrder(repeatData) {
     code = repeatData.code;
     desc = repeatData.desc;
     type = repeatData.type;
+    work = repeatData.work || '';
     elapsedBase = repeatData.elapsedBase;
     continuedId = repeatData.id; // ID wpisu który aktualizujemy
   } else {
@@ -304,19 +362,22 @@ function startOrder(repeatData) {
     code = document.getElementById('codeInput').value.trim();
     desc = document.getElementById('descInput').value.trim();
     type = selectedType;
+    work = currentWorkValue();
     elapsedBase = 0;
     if (!zlec) { showToast('❌ Wpisz numer zlecenia!'); return; }
     if (!type) { showToast('❌ Wybierz typ zlecenia!'); return; }
   }
-  curOrder = { id: continuedId||Date.now(), zlec, code, desc, type, elapsedBase, startTime: new Date().toISOString() };
+  curOrder = { id: continuedId||Date.now(), zlec, code, desc, type, work, elapsedBase, startTime: new Date().toISOString() };
   tStart = Date.now();
   elapsed = elapsedBase;
   document.getElementById('curZlec').textContent = zlec;
   document.getElementById('curZlec').classList.remove('code-empty');
   document.getElementById('curType').innerHTML = typeBadge(type);
+  document.getElementById('curWork').textContent = work || '—';
   document.getElementById('timerDisp').classList.add('run');
   document.getElementById('timerDisp').textContent = fmtSec(elapsed);
   document.getElementById('btnEndOrder').disabled = false;
+  document.getElementById('btnEditActive').disabled = false;
   document.getElementById('timerBgNote').style.display = 'flex';
   startTimerTick(); saveTimerState();
   flash(); beep();
@@ -331,7 +392,10 @@ function startOrder(repeatData) {
     document.getElementById('codeInput').value='';
     document.getElementById('descInput').value='';
     document.querySelectorAll('.type-btn').forEach(b=>b.className='type-btn');
-    selectedType=null;
+    document.querySelectorAll('.work-btn').forEach(b=>b.classList.remove('on'));
+    document.getElementById('workOther').value='';
+    document.getElementById('workOther').style.display='none';
+    selectedType=null; selectedWork=null;
   }
 }
 // ── KONTYNUUJ — aktualizuje istniejacy wpis ───
@@ -346,6 +410,7 @@ function repeatOrder(id) {
     code: o.code,
     desc: o.desc,
     type: o.type,
+    work: o.work || '',
     elapsedBase: o.duration || 0
   });
 }
@@ -375,9 +440,11 @@ function endOrder() {
   document.getElementById('curZlec').textContent='— brak —';
   document.getElementById('curZlec').classList.add('code-empty');
   document.getElementById('curType').innerHTML='—';
+  document.getElementById('curWork').textContent='—';
   document.getElementById('timerDisp').textContent='00:00:00';
   document.getElementById('timerDisp').classList.remove('run');
   document.getElementById('btnEndOrder').disabled=true;
+  document.getElementById('btnEditActive').disabled=true;
   document.getElementById('timerBgNote').style.display='none';
   showToast('✅ Zakonczone: '+fmtDur(totalDuration));
   updateStats();
@@ -418,15 +485,18 @@ function renderPeriodTabs(){
 }
 function setPeriod(p){periodBy=p;renderPeriodTabs();renderOrders();}
 // ── ORDERS ────────────────────────────────────
-function renderOrders() {
-  renderPeriodTabs();
-  const q=document.getElementById('search').value.toLowerCase();
-  let list=orders.filter(o=>{
+function getFilteredList() {
+  const q=(document.getElementById('search').value||'').toLowerCase();
+  return orders.filter(o=>{
     const mf=filterBy==='all'||o.type===filterBy;
     const mp=periodBy==='all'||periodKey(o)===periodBy;
-    const ms=(o.zlec||'').toLowerCase().includes(q)||(o.code||'').toLowerCase().includes(q)||(o.desc||'').toLowerCase().includes(q)||fmtDate(o.startTime).includes(q);
+    const ms=(o.zlec||'').toLowerCase().includes(q)||(o.code||'').toLowerCase().includes(q)||(o.desc||'').toLowerCase().includes(q)||(o.work||'').toLowerCase().includes(q)||fmtDate(o.startTime).includes(q);
     return mf&&mp&&ms;
   });
+}
+function renderOrders() {
+  renderPeriodTabs();
+  let list=getFilteredList();
   const sumSec=list.reduce((s,o)=>s+(o.duration||0),0);
   const sumEl=document.getElementById('periodSummary');
   if(sumEl) sumEl.innerHTML=list.length?('<span>📊 '+list.length+' zlecen</span><span>⏱ '+fmtDur(sumSec)+'</span>'):'';
@@ -454,10 +524,12 @@ function renderOrders() {
 <div class="odur">${fmtDur(o.duration||0)}</div>
 </div>
 <div style="margin-top:6px;">${typeBadge(o.type||'platne')}</div>
+      ${o.work?`<div class="odesc">🔧 ${esc(o.work)}</div>`:''}
       ${o.code?`<div class="odesc">🔑 Kod: ${esc(o.code)}</div>`:''}
       ${o.desc?`<div class="odesc">📝 ${esc(o.desc)}</div>`:''}
 <div class="orow-btns">
-<button class="orow-btn btn-rep" onclick="repeatOrder(${o.id})">🔁 Kontynuuj zlecenie</button>
+<button class="orow-btn btn-rep" onclick="repeatOrder(${o.id})">🔁 Kontynuuj</button>
+<button class="orow-btn btn-edit" onclick="editOrder(${o.id})">✏️ Edytuj</button>
 <button class="orow-btn btn-del" onclick="delOrder(${o.id})">🗑 Usun</button>
 </div>
 </div>`).join('');
@@ -467,34 +539,110 @@ function clearAll(){if(!confirm('Usunac wszystkie zlecenia?'))return;orders=[];s
 function showSortModal(){document.getElementById('sortModal').classList.add('show');}
 function hideSortModal(e){if(e.target===document.getElementById('sortModal'))document.getElementById('sortModal').classList.remove('show');}
 function setSort(s){sortBy=s;document.querySelectorAll('.sort-opt').forEach(el=>el.classList.toggle('active',el.dataset.sort===s));document.getElementById('sortModal').classList.remove('show');renderOrders();}
+// ── EDYCJA ────────────────────────────────────
+function editOrder(id){
+  const o=orders.find(x=>x.id===id);
+  if(!o) return;
+  editTarget={mode:'history',id};
+  document.getElementById('edZlec').value=o.zlec||'';
+  document.getElementById('edWork').value=o.work||'';
+  document.getElementById('edCode').value=o.code||'';
+  document.getElementById('edDesc').value=o.desc||'';
+  const dur=o.duration||0;
+  document.getElementById('edH').value=Math.floor(dur/3600);
+  document.getElementById('edM').value=Math.floor((dur%3600)/60);
+  document.getElementById('edTimeWrap').style.display='block';
+  document.getElementById('editModal').classList.add('show');
+}
+function editActive(){
+  if(!curOrder) return;
+  editTarget={mode:'active'};
+  document.getElementById('edZlec').value=curOrder.zlec||'';
+  document.getElementById('edWork').value=curOrder.work||'';
+  document.getElementById('edCode').value=curOrder.code||'';
+  document.getElementById('edDesc').value=curOrder.desc||'';
+  document.getElementById('edTimeWrap').style.display='none';
+  document.getElementById('editModal').classList.add('show');
+}
+function hideEditModal(e){
+  if(e && e.target!==document.getElementById('editModal')) return;
+  document.getElementById('editModal').classList.remove('show');
+}
+function saveEdit(){
+  if(!editTarget) return;
+  const zlec=document.getElementById('edZlec').value.trim();
+  const work=document.getElementById('edWork').value.trim();
+  const code=document.getElementById('edCode').value.trim();
+  const desc=document.getElementById('edDesc').value.trim();
+  if(!zlec){showToast('❌ Wpisz numer zlecenia!');return;}
+  if(editTarget.mode==='history'){
+    const o=orders.find(x=>x.id===editTarget.id);
+    if(!o){document.getElementById('editModal').classList.remove('show');return;}
+    o.zlec=zlec; o.work=work; o.code=code; o.desc=desc;
+    const h=parseInt(document.getElementById('edH').value,10)||0;
+    const m=parseInt(document.getElementById('edM').value,10)||0;
+    o.duration=h*3600+m*60;
+    save(); renderOrders();
+  } else {
+    curOrder.zlec=zlec; curOrder.work=work; curOrder.code=code; curOrder.desc=desc;
+    document.getElementById('curZlec').textContent=zlec;
+    document.getElementById('curZlec').classList.remove('code-empty');
+    document.getElementById('curWork').textContent=work||'—';
+    saveTimerState();
+  }
+  document.getElementById('editModal').classList.remove('show');
+  editTarget=null;
+  showToast('✅ Zapisano zmiany');
+}
 // ── PDF ───────────────────────────────────────
-function exportPDF(){
-  if(orders.length===0){showToast('❌ Brak zlecen');return;}
+function buildPdf(forPrint){
+  const list=getFilteredList();
+  if(list.length===0){showToast('❌ Brak zlecen do raportu');return;}
   const{jsPDF}=window.jspdf;const doc=new jsPDF();
-  const totalSec=orders.reduce((s,o)=>s+(o.duration||0),0);const now=new Date();
+  const now=new Date();
+  const totalSec=list.reduce((s,o)=>s+(o.duration||0),0);
+  const okres=periodBy==='all'?'Wszystkie miesiace':periodLabel(periodBy);
+  const tl={gwarancja:'Gwarancja',platne:'Platne',kontynuacja:'Kontynuacja'};
   doc.setFillColor(11,13,18);doc.rect(0,0,210,38,'F');
   doc.setTextColor(0,212,255);doc.setFontSize(20);doc.setFont('helvetica','bold');doc.text('ScanFlow',14,16);
   doc.setFontSize(9);doc.setFont('helvetica','normal');doc.setTextColor(150,160,180);
-  doc.text('Raport zlecen v3.2',14,24);doc.text('Wygenerowano: '+fmtDate(now),14,31);
+  doc.text('Raport zlecen v3.3  |  Okres: '+okres,14,24);
+  doc.text('Wygenerowano: '+fmtDate(now),14,31);
   doc.setFillColor(22,26,36);doc.roundedRect(14,44,182,22,3,3,'F');
   doc.setTextColor(57,255,20);doc.setFontSize(13);doc.setFont('helvetica','bold');
-  doc.text('Zlecen: '+orders.length,20,58);
+  doc.text('Zlecen: '+list.length,20,58);
   doc.text('Lacznie: '+fmtDur(totalSec),85,58);
-  doc.text('Sredni: '+fmtDur(Math.round(totalSec/orders.length)),152,58);
-  const tl={gwarancja:'Gwarancja',platne:'Platne',kontynuacja:'Kontynuacja'};
-  doc.autoTable({
-    startY:72,
-    head:[['#','Nr zlecenia','Typ','Uwagi','Data','Czas']],
-    body:orders.map((o,i)=>[i+1,o.zlec||'—',tl[o.type]||'—',o.desc||'—',fmtDate(o.startTime),fmtDur(o.duration||0)]),
-    theme:'grid',
-    headStyles:{fillColor:[17,19,24],textColor:[0,212,255],fontStyle:'bold',fontSize:8},
-    bodyStyles:{textColor:[200,210,230],fillColor:[11,13,18],fontSize:7},
-    alternateRowStyles:{fillColor:[17,19,24]},
-    columnStyles:{0:{cellWidth:10,halign:'center'},1:{cellWidth:28,textColor:[0,212,255]},2:{cellWidth:25},3:{cellWidth:57},5:{halign:'center',textColor:[57,255,20]}},
-    margin:{left:14,right:14}
+  doc.text('Sredni: '+fmtDur(Math.round(totalSec/list.length)),152,58);
+  const groups={};
+  list.forEach(o=>{const k=(o.work&&o.work.trim())?o.work.trim():'Inne';(groups[k]=groups[k]||[]).push(o);});
+  let y=72;
+  Object.keys(groups).sort((a,b)=>a.localeCompare(b)).forEach(cat=>{
+    const rows=groups[cat].slice().sort((a,b)=>new Date(b.startTime)-new Date(a.startTime));
+    const catSec=rows.reduce((s,o)=>s+(o.duration||0),0);
+    doc.autoTable({
+      startY:y,
+      head:[
+        [{content:cat+'   —   '+rows.length+' zlec  /  '+fmtDur(catSec),colSpan:6,styles:{fillColor:[0,212,255],textColor:[11,13,18],fontStyle:'bold',fontSize:9,halign:'left'}}],
+        ['#','Nr zlecenia','Typ','Uwagi','Data','Czas']
+      ],
+      body:rows.map((o,i)=>[i+1,o.zlec||'—',tl[o.type]||'—',o.desc||'—',fmtDate(o.startTime),fmtDur(o.duration||0)]),
+      theme:'grid',
+      headStyles:{fillColor:[17,19,24],textColor:[0,212,255],fontStyle:'bold',fontSize:8},
+      bodyStyles:{textColor:[200,210,230],fillColor:[11,13,18],fontSize:7},
+      alternateRowStyles:{fillColor:[17,19,24]},
+      columnStyles:{0:{cellWidth:10,halign:'center'},1:{cellWidth:28,textColor:[0,212,255]},2:{cellWidth:25},3:{cellWidth:57},5:{halign:'center',textColor:[57,255,20]}},
+      margin:{left:14,right:14}
+    });
+    y=doc.lastAutoTable.finalY+6;
   });
-  doc.save('scanflow_'+now.toISOString().slice(0,10)+'.pdf');
-  showToast('📄 PDF zapisany!');
+  if(forPrint){
+    doc.autoPrint();
+    window.open(doc.output('bloburl'),'_blank');
+    showToast('🖨 Otwieram do druku...');
+  } else {
+    doc.save('scanflow_'+now.toISOString().slice(0,10)+'.pdf');
+    showToast('📄 PDF zapisany!');
+  }
 }
 function save(){localStorage.setItem('sf_orders',JSON.stringify(orders));updateStats();}
 function fmtSec(s){return[Math.floor(s/3600),Math.floor((s%3600)/60),s%60].map(v=>String(v).padStart(2,'0')).join(':');}
