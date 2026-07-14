@@ -218,7 +218,7 @@ Timer dziala w tle
         </div>
       </div>
     </div>
-    <div class="version">ScanFlow v3.4 — Druk raportu</div>
+    <div class="version">ScanFlow v3.5 — Segregacja wg typu</div>
   </div>
   <div class="panel" id="panel-orders">
     <div class="ocontrols">
@@ -239,7 +239,7 @@ Timer dziala w tle
       <div class="period-summary" id="periodSummary"></div>
     </div>
     <div class="olist" id="olist"></div>
-    <div class="version">ScanFlow v3.4 — Druk raportu</div>
+    <div class="version">ScanFlow v3.5 — Segregacja wg typu</div>
   </div>
 </div>
 <div id="printArea"></div>
@@ -622,7 +622,7 @@ function buildPdf(forPrint){
   doc.setFillColor(11,13,18);doc.rect(0,0,210,38,'F');
   doc.setTextColor(0,212,255);doc.setFontSize(20);doc.setFont('helvetica','bold');doc.text('ScanFlow',14,16);
   doc.setFontSize(9);doc.setFont('helvetica','normal');doc.setTextColor(150,160,180);
-  doc.text('Raport zlecen v3.4  |  Okres: '+okres,14,24);
+  doc.text('Raport zlecen v3.5  |  Okres: '+okres,14,24);
   doc.text('Wygenerowano: '+fmtDate(now),14,31);
   doc.setFillColor(22,26,36);doc.roundedRect(14,44,182,22,3,3,'F');
   doc.setTextColor(57,255,20);doc.setFontSize(13);doc.setFont('helvetica','bold');
@@ -630,23 +630,26 @@ function buildPdf(forPrint){
   doc.text('Lacznie: '+fmtDur(totalSec),85,58);
   doc.text('Sredni: '+fmtDur(Math.round(totalSec/list.length)),152,58);
   const groups={};
-  list.forEach(o=>{const k=(o.work&&o.work.trim())?o.work.trim():'Inne';(groups[k]=groups[k]||[]).push(o);});
+  list.forEach(o=>{const k=o.type||'inne';(groups[k]=groups[k]||[]).push(o);});
+  const catOrder=['gwarancja','platne','kontynuacja'];
+  const catKeys=Object.keys(groups).sort((a,b)=>{const ia=catOrder.indexOf(a),ib=catOrder.indexOf(b);return (ia<0?99:ia)-(ib<0?99:ib);});
   let y=72;
-  Object.keys(groups).sort((a,b)=>a.localeCompare(b)).forEach(cat=>{
+  catKeys.forEach(cat=>{
     const rows=groups[cat].slice().sort((a,b)=>new Date(b.startTime)-new Date(a.startTime));
     const catSec=rows.reduce((s,o)=>s+(o.duration||0),0);
+    const catLabel=tl[cat]||cat;
     doc.autoTable({
       startY:y,
       head:[
-        [{content:cat+'   —   '+rows.length+' zlec  /  '+fmtDur(catSec),colSpan:6,styles:{fillColor:[0,212,255],textColor:[11,13,18],fontStyle:'bold',fontSize:9,halign:'left'}}],
-        ['#','Nr zlecenia','Typ','Uwagi','Data','Czas']
+        [{content:catLabel+'   —   '+rows.length+' zlec  /  '+fmtDur(catSec),colSpan:6,styles:{fillColor:[0,212,255],textColor:[11,13,18],fontStyle:'bold',fontSize:9,halign:'left'}}],
+        ['#','Nr zlecenia','Rodzaj','Uwagi','Data','Czas']
       ],
-      body:rows.map((o,i)=>[i+1,o.zlec||'—',tl[o.type]||'—',o.desc||'—',fmtDate(o.startTime),fmtDur(o.duration||0)]),
+      body:rows.map((o,i)=>[i+1,o.zlec||'—',o.work||'—',o.desc||'—',fmtDate(o.startTime),fmtDur(o.duration||0)]),
       theme:'grid',
       headStyles:{fillColor:[17,19,24],textColor:[0,212,255],fontStyle:'bold',fontSize:8},
       bodyStyles:{textColor:[200,210,230],fillColor:[11,13,18],fontSize:7},
       alternateRowStyles:{fillColor:[17,19,24]},
-      columnStyles:{0:{cellWidth:10,halign:'center'},1:{cellWidth:28,textColor:[0,212,255]},2:{cellWidth:25},3:{cellWidth:57},5:{halign:'center',textColor:[57,255,20]}},
+      columnStyles:{0:{cellWidth:10,halign:'center'},1:{cellWidth:28,textColor:[0,212,255]},2:{cellWidth:30},3:{cellWidth:52},5:{halign:'center',textColor:[57,255,20]}},
       margin:{left:14,right:14}
     });
     y=doc.lastAutoTable.finalY+6;
@@ -667,17 +670,20 @@ function buildPrintReport(){
   const totalSec=list.reduce((s,o)=>s+(o.duration||0),0);
   const tl={gwarancja:'Gwarancja',platne:'Platne',kontynuacja:'Kontynuacja'};
   const groups={};
-  list.forEach(o=>{const k=(o.work&&o.work.trim())?o.work.trim():'Inne (bez rodzaju)';(groups[k]=groups[k]||[]).push(o);});
+  list.forEach(o=>{const k=o.type||'inne';(groups[k]=groups[k]||[]).push(o);});
+  const catOrder=['gwarancja','platne','kontynuacja'];
+  const catKeys=Object.keys(groups).sort((a,b)=>{const ia=catOrder.indexOf(a),ib=catOrder.indexOf(b);return (ia<0?99:ia)-(ib<0?99:ib);});
   let html='<h1>ScanFlow — Raport zlecen</h1>';
   html+='<div class="pr-sub">Okres: '+esc(okres)+'  |  Wygenerowano: '+esc(fmtDate(new Date()))+'</div>';
   html+='<div class="pr-tot">Razem: '+list.length+' zlecen  •  Laczny czas: '+fmtDur(totalSec)+'</div>';
-  Object.keys(groups).sort((a,b)=>a.localeCompare(b)).forEach(cat=>{
+  catKeys.forEach(cat=>{
     const rows=groups[cat].slice().sort((a,b)=>new Date(b.startTime)-new Date(a.startTime));
     const catSec=rows.reduce((s,o)=>s+(o.duration||0),0);
-    html+='<div class="pr-cat">'+esc(cat)+' — '+rows.length+' zlec / '+fmtDur(catSec)+'</div>';
-    html+='<table><thead><tr><th>#</th><th>Nr zlecenia</th><th>Typ</th><th>Uwagi</th><th>Data</th><th>Czas</th></tr></thead><tbody>';
+    const catLabel=tl[cat]||cat;
+    html+='<div class="pr-cat">'+esc(catLabel)+' — '+rows.length+' zlec / '+fmtDur(catSec)+'</div>';
+    html+='<table><thead><tr><th>#</th><th>Nr zlecenia</th><th>Rodzaj</th><th>Uwagi</th><th>Data</th><th>Czas</th></tr></thead><tbody>';
     rows.forEach((o,i)=>{
-      html+='<tr><td>'+(i+1)+'</td><td>'+esc(o.zlec||'—')+'</td><td>'+(tl[o.type]||'—')+'</td><td>'+esc(o.desc||'—')+'</td><td>'+esc(fmtDate(o.startTime))+'</td><td>'+fmtDur(o.duration||0)+'</td></tr>';
+      html+='<tr><td>'+(i+1)+'</td><td>'+esc(o.zlec||'—')+'</td><td>'+esc(o.work||'—')+'</td><td>'+esc(o.desc||'—')+'</td><td>'+esc(fmtDate(o.startTime))+'</td><td>'+fmtDur(o.duration||0)+'</td></tr>';
     });
     html+='</tbody></table>';
   });
