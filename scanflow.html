@@ -123,6 +123,21 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 .sort-opt{display:flex;align-items:center;justify-content:space-between;padding:14px 4px;border-bottom:1px solid var(--border);cursor:pointer;font-size:.95rem;color:var(--text)}
 .sort-opt.active{color:var(--accent)}
 .sort-opt:last-child{border-bottom:none}
+#printArea{display:none}
+@media print{
+  html,body{overflow:visible!important;height:auto!important;background:#fff!important}
+  body::before{display:none!important}
+  #app,#sortModal,#editModal,#toast,#flash{display:none!important}
+  #printArea{display:block!important;color:#000;background:#fff;font-family:'Sora',Arial,sans-serif;padding:6px}
+  #printArea h1{font-size:20px;margin:0 0 2px}
+  #printArea .pr-sub{font-size:11px;color:#333;margin-bottom:8px}
+  #printArea .pr-tot{font-size:12px;font-weight:700;margin:6px 0 12px}
+  #printArea .pr-cat{font-size:13px;font-weight:800;margin:14px 0 4px;padding:5px 8px;background:#e8f4ff;border-left:4px solid #0088cc;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  #printArea table{width:100%;border-collapse:collapse;font-size:10px;margin-bottom:4px}
+  #printArea th,#printArea td{border:1px solid #999;padding:3px 5px;text-align:left}
+  #printArea th{background:#eee;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  #printArea tr{page-break-inside:avoid}
+}
 </style>
 </head>
 <body>
@@ -203,7 +218,7 @@ Timer dziala w tle
         </div>
       </div>
     </div>
-    <div class="version">ScanFlow v3.3 — Rodzaje + edycja</div>
+    <div class="version">ScanFlow v3.4 — Druk raportu</div>
   </div>
   <div class="panel" id="panel-orders">
     <div class="ocontrols">
@@ -218,15 +233,16 @@ Timer dziala w tle
       <div class="obar">
         <button class="btn btn-ghost" onclick="showSortModal()">⇅ Sortuj</button>
         <button class="btn btn-success" onclick="buildPdf(false)">📄 PDF</button>
-        <button class="btn btn-ghost" onclick="buildPdf(true)">🖨 Druk</button>
+        <button class="btn btn-ghost" onclick="buildPrintReport()">🖨 Druk</button>
         <button class="btn btn-danger" id="btnClear" onclick="clearAll()" disabled>🗑</button>
       </div>
       <div class="period-summary" id="periodSummary"></div>
     </div>
     <div class="olist" id="olist"></div>
-    <div class="version">ScanFlow v3.3 — Rodzaje + edycja</div>
+    <div class="version">ScanFlow v3.4 — Druk raportu</div>
   </div>
 </div>
+<div id="printArea"></div>
 <div class="modal-bg" id="sortModal" onclick="hideSortModal(event)">
   <div class="modal-sheet">
     <div class="modal-title">Sortowanie</div>
@@ -606,7 +622,7 @@ function buildPdf(forPrint){
   doc.setFillColor(11,13,18);doc.rect(0,0,210,38,'F');
   doc.setTextColor(0,212,255);doc.setFontSize(20);doc.setFont('helvetica','bold');doc.text('ScanFlow',14,16);
   doc.setFontSize(9);doc.setFont('helvetica','normal');doc.setTextColor(150,160,180);
-  doc.text('Raport zlecen v3.3  |  Okres: '+okres,14,24);
+  doc.text('Raport zlecen v3.4  |  Okres: '+okres,14,24);
   doc.text('Wygenerowano: '+fmtDate(now),14,31);
   doc.setFillColor(22,26,36);doc.roundedRect(14,44,182,22,3,3,'F');
   doc.setTextColor(57,255,20);doc.setFontSize(13);doc.setFont('helvetica','bold');
@@ -644,6 +660,31 @@ function buildPdf(forPrint){
     showToast('📄 PDF zapisany!');
   }
 }
+function buildPrintReport(){
+  const list=getFilteredList();
+  if(list.length===0){showToast('❌ Brak zlecen do raportu');return;}
+  const okres=periodBy==='all'?'Wszystkie miesiace':periodLabel(periodBy);
+  const totalSec=list.reduce((s,o)=>s+(o.duration||0),0);
+  const tl={gwarancja:'Gwarancja',platne:'Platne',kontynuacja:'Kontynuacja'};
+  const groups={};
+  list.forEach(o=>{const k=(o.work&&o.work.trim())?o.work.trim():'Inne (bez rodzaju)';(groups[k]=groups[k]||[]).push(o);});
+  let html='<h1>ScanFlow — Raport zlecen</h1>';
+  html+='<div class="pr-sub">Okres: '+esc(okres)+'  |  Wygenerowano: '+esc(fmtDate(new Date()))+'</div>';
+  html+='<div class="pr-tot">Razem: '+list.length+' zlecen  •  Laczny czas: '+fmtDur(totalSec)+'</div>';
+  Object.keys(groups).sort((a,b)=>a.localeCompare(b)).forEach(cat=>{
+    const rows=groups[cat].slice().sort((a,b)=>new Date(b.startTime)-new Date(a.startTime));
+    const catSec=rows.reduce((s,o)=>s+(o.duration||0),0);
+    html+='<div class="pr-cat">'+esc(cat)+' — '+rows.length+' zlec / '+fmtDur(catSec)+'</div>';
+    html+='<table><thead><tr><th>#</th><th>Nr zlecenia</th><th>Typ</th><th>Uwagi</th><th>Data</th><th>Czas</th></tr></thead><tbody>';
+    rows.forEach((o,i)=>{
+      html+='<tr><td>'+(i+1)+'</td><td>'+esc(o.zlec||'—')+'</td><td>'+(tl[o.type]||'—')+'</td><td>'+esc(o.desc||'—')+'</td><td>'+esc(fmtDate(o.startTime))+'</td><td>'+fmtDur(o.duration||0)+'</td></tr>';
+    });
+    html+='</tbody></table>';
+  });
+  document.getElementById('printArea').innerHTML=html;
+  showToast('🖨 Otwieram do druku...');
+  setTimeout(()=>window.print(),120);
+}
 function save(){localStorage.setItem('sf_orders',JSON.stringify(orders));updateStats();}
 function fmtSec(s){return[Math.floor(s/3600),Math.floor((s%3600)/60),s%60].map(v=>String(v).padStart(2,'0')).join(':');}
 function fmtDur(s){if(s<60)return s+'s';if(s<3600)return Math.floor(s/60)+'m '+(s%60)+'s';return Math.floor(s/3600)+'h '+Math.floor((s%3600)/60)+'m';}
@@ -658,3 +699,4 @@ updateStats();renderOrders();restoreTimerState();
 </script>
 </body>
 </html>
+
